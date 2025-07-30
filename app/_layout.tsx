@@ -1,29 +1,54 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+// in app/_layout.tsx
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+import "../global.css";
+import { ClerkProvider, SignedIn, SignedOut } from "@clerk/clerk-expo";
+import { Slot, useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import React from "react";
+
+const tokenCache = {
+  async getToken(key: string) {
+    try {
+      return SecureStore.getItemAsync(key);
+    } catch (err) {
+      return null;
+    }
+  },
+  async saveToken(key: string, value: string) {
+    try {
+      return SecureStore.setItemAsync(key, value);
+    } catch (err) {
+      return;
+    }
+  },
+};
+
+const SignedOutLayout = () => {
+  const router = useRouter();
+  React.useEffect(() => {
+    router.replace('/login');
+  }, []);
+  return <Slot />;
+};
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
+  if (!publishableKey) {
+    throw new Error("Missing Clerk Publishable Key. Please set it in your .env file.");
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <ClerkProvider
+      tokenCache={tokenCache}
+      publishableKey={publishableKey}
+    >
+      <SignedIn>
+        <Slot />
+      </SignedIn>
+      <SignedOut>
+        <SignedOutLayout />
+      </SignedOut>
+    </ClerkProvider>
   );
 }

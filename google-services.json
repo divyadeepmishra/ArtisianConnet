@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "454441780451",
+    "project_id": "artisianconnet",
+    "storage_bucket": "artisianconnet.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:454441780451:android:02dd427d41ef709f5bb1d6",
+        "android_client_info": {
+          "package_name": "com.iron.artisianconnet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "454441780451-02irrk01mlrkif52a1fcjj8ulqoobfs0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADrz3byA5QmE7GnbWEIBcfUpxvbuiiRbg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "454441780451-02irrk01mlrkif52a1fcjj8ulqoobfs0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
