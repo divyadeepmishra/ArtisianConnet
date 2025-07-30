@@ -26,7 +26,7 @@ export default function LoginScreen() {
 
       if (signInAttempt.status === 'complete') {
         await setActive({ session: signInAttempt.createdSessionId });
-        router.replace('/(tabs)/profile'); // Redirect to the profile page after successful sign-in
+        router.replace('/profile'); // Redirect to the profile page after successful sign-in
       } else {
         console.error(JSON.stringify(signInAttempt, null, 2));
       }
