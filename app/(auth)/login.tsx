@@ -26,7 +26,7 @@ export default function LoginScreen() {
 
       if (signInAttempt.status === 'complete') {
         await setActive({ session: signInAttempt.createdSessionId });
-        router.replace('/profile'); // Redirect to the profile page after successful sign-in
+        router.replace('/(tabs)/profile'); // Redirect to the profile page after successful sign-in
       } else {
         console.error(JSON.stringify(signInAttempt, null, 2));
       }
@@ -50,7 +50,7 @@ export default function LoginScreen() {
 
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
-        // The router.replace('/') will be handled by the root layout now
+        router.replace('/profile'); // Redirect to the profile page after successful sign-in
       }
     } catch (err) {
       console.error('OAuth error', err);
