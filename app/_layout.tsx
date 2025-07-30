@@ -1,8 +1,6 @@
-// in app/_layout.tsx
-
 import "../global.css";
-import { ClerkProvider, SignedIn, SignedOut } from "@clerk/clerk-expo";
-import { Slot, useRouter } from "expo-router";
+import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
+import { Slot, useRouter, useSegments } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React from "react";
 
@@ -23,11 +21,23 @@ const tokenCache = {
   },
 };
 
-const SignedOutLayout = () => {
+const InitialLayout = () => {
+  const { isLoaded, isSignedIn } = useAuth();
+  const segments = useSegments();
   const router = useRouter();
+
   React.useEffect(() => {
-    router.replace('/login');
-  }, []);
+    if (!isLoaded) return;
+
+    const inTabsGroup = segments[0] === '(tabs)';
+
+    if (isSignedIn && !inTabsGroup) {
+      router.replace('/');
+    } else if (!isSignedIn && inTabsGroup) {
+      router.replace('/login');
+    }
+  }, [isLoaded, isSignedIn]);
+
   return <Slot />;
 };
 
@@ -43,12 +53,7 @@ export default function RootLayout() {
       tokenCache={tokenCache}
       publishableKey={publishableKey}
     >
-      <SignedIn>
-        <Slot />
-      </SignedIn>
-      <SignedOut>
-        <SignedOutLayout />
-      </SignedOut>
+      <InitialLayout />
     </ClerkProvider>
   );
 }
