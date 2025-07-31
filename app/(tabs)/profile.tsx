@@ -1,9 +1,42 @@
-import { Text, View, SafeAreaView } from 'react-native';
+// in app/(tabs)/profile.tsx
+
+import { Text, View, SafeAreaView, TouchableOpacity } from 'react-native';
+import { useAuth, useUser } from '@clerk/clerk-expo';
+import { Link } from 'expo-router';
 
 export default function ProfileScreen() {
+  const { user } = useUser();
+  const { signOut, isSignedIn } = useAuth();
+
   return (
-    <SafeAreaView className="flex-1 items-center justify-center bg-pink-100">
-      <Text className="text-3xl font-bold text-black">Profile Screen</Text>
+    <SafeAreaView className="flex-1 bg-white">
+      <View className="flex-1 items-center justify-center p-6">
+        {isSignedIn ? (
+          // Show this if the user is logged in
+          <View className="items-center">
+            <Text className="text-2xl font-bold">Welcome, {user?.firstName}</Text>
+            <Text className="text-base text-gray-600 mt-2">
+              {user?.primaryEmailAddress?.emailAddress}
+            </Text>
+            <TouchableOpacity
+              onPress={() => signOut()}
+              className="mt-8 bg-black p-4 rounded-lg w-64 items-center"
+            >
+              <Text className="text-white font-bold">Sign Out</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          // Show this if the user is not logged in
+          <View className="items-center">
+            <Text className="text-2xl font-bold text-center mb-4">Log in to manage your profile</Text>
+            <Link href="/login" asChild>
+              <TouchableOpacity className="bg-blue-500 p-4 rounded-lg w-64 items-center">
+                <Text className="text-white font-bold">Login or Sign Up</Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
