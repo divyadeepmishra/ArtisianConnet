@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { View, Text, SafeAreaView, TextInput, TouchableOpacity, Image, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -44,19 +43,18 @@ export default function AddProductScreen() {
     setIsLoading(true);
 
     try {
-      // --- This is the new, correct logic ---
-      const clerkToken = await getToken({ template: 'supabase' }); // Use the Supabase template for the token
-      if (!clerkToken) throw new Error("Could not get Clerk token for Supabase.");
+      const clerkToken = await getToken(); 
+      if (!clerkToken) throw new Error("Could not get Clerk token.");
 
-      // Set the token for Supabase to use for this request
-      supabase.auth.setSession({
+      const { error: sessionError } = await supabase.auth.setSession({
         access_token: clerkToken,
         refresh_token: clerkToken,
       });
-      // --- End of new logic ---
+
+      if (sessionError) throw sessionError;
 
       const fileExt = image.uri.split('.').pop();
-      const fileName = `${userId}-${Date.now()}.${fileExt}`; // Add userId for better organization
+      const fileName = `${userId}-${Date.now()}.${fileExt}`;
       const base64 = image.base64;
       if (!base64) throw new Error("Image does not have base64 data.");
 
@@ -77,7 +75,7 @@ export default function AddProductScreen() {
         description: description,
         price: parseFloat(price),
         imageUrl: imageUrl,
-        sellerId: userId,
+        seller_id: userId, 
       });
 
       if (insertError) throw insertError;
