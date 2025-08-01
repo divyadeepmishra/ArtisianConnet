@@ -1,15 +1,15 @@
-// in app/(tabs)/profile.tsx
-
 import { Text, View, SafeAreaView, TouchableOpacity } from 'react-native';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Link } from 'expo-router';
+import ScreenWrapper from '../../components/ScreenWrapper';
 
 export default function ProfileScreen() {
   const { user } = useUser();
   const { signOut, isSignedIn } = useAuth();
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <ScreenWrapper>
+       <Text className="text-3xl font-extrabold text-gray-900 mx-1 p-5">Account</Text>
       <View className="flex-1 items-center justify-center p-6">
         {isSignedIn ? (
           // Show this if the user is logged in
@@ -37,6 +37,6 @@ export default function ProfileScreen() {
           </View>
         )}
       </View>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }

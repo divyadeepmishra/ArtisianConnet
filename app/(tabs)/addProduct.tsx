@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@clerk/clerk-expo';
 import { decode } from 'base64-arraybuffer';
 import { createSupabaseWithClerk } from '../../lib/supabaseWithClerk';
+import ScreenWrapper from '../../components/ScreenWrapper';
 
 export default function AddProductScreen() {
   const { getToken, userId } = useAuth();
@@ -101,7 +102,7 @@ export default function AddProductScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <ScreenWrapper>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView>
           <View className="p-6">
@@ -165,6 +166,6 @@ export default function AddProductScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
