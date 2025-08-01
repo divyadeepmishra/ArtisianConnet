@@ -56,7 +56,7 @@ export default function AddProductScreen() {
     setIsLoading(true);
     try {
       const clerkToken = await getToken();
-      if (!clerkToken) throw new Error('Failed to get Clerk token.');
+      if (!clerkToken) throw new Error('Failed to get Authenticated token.');
 
       const supabaseWithClerk = createSupabaseWithClerk(clerkToken);
 
@@ -81,7 +81,7 @@ export default function AddProductScreen() {
         name: productName,
         description,
         price: parseFloat(price),
-        image_url: imageUrl, // ✅ renamed to snake_case
+        image_url: imageUrl, 
         seller_id: userId,
       });
 
