@@ -33,7 +33,7 @@ export default function HelpScreen() {
     setMessages([
       {
         id: 'init',
-        text: 'Hello! As an AI assistant, I can help with questions about order tracking or return policies.',
+        text: 'Hello! As an AI assistant, I can help with questions about order tracking and return policies.',
         from: 'bot',
       },
     ]);
