@@ -2,8 +2,6 @@ import "../global.css";
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { Slot } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import ScreenWrapper from "../components/ScreenWrapper";
 
 const tokenCache = {
   async getToken(key: string) {

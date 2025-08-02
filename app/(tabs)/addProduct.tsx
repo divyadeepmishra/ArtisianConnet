@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  SafeAreaView,
   TextInput,
   TouchableOpacity,
   Image,
@@ -13,11 +12,12 @@ import {
   Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@clerk/clerk-expo';
 import { decode } from 'base64-arraybuffer';
 import { createSupabaseWithClerk } from '../../lib/supabaseWithClerk';
-import ScreenWrapper from '../../components/ScreenWrapper';
+
 
 export default function AddProductScreen() {
   const { getToken, userId } = useAuth();
@@ -102,7 +102,7 @@ export default function AddProductScreen() {
   };
 
   return (
-    <ScreenWrapper>
+    <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView>
           <View className="p-6">
@@ -166,6 +166,6 @@ export default function AddProductScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </ScreenWrapper>
+    </SafeAreaView>
   );
 }

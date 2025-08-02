@@ -36,6 +36,15 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="help"
+        options={{
+          title: 'Help Center',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'help-buoy' : 'help-buoy-outline'} size={size} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

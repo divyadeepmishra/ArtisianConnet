@@ -1,14 +1,15 @@
-import { Text, View, SafeAreaView, TouchableOpacity } from 'react-native';
+import { Text, View, TouchableOpacity } from 'react-native';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Link } from 'expo-router';
-import ScreenWrapper from '../../components/ScreenWrapper';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 export default function ProfileScreen() {
   const { user } = useUser();
   const { signOut, isSignedIn } = useAuth();
 
   return (
-    <ScreenWrapper>
+    <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'left', 'right']}>
        <Text className="text-3xl font-extrabold text-gray-900 mx-1 p-5">Account</Text>
       <View className="flex-1 items-center justify-center p-6">
         {isSignedIn ? (
@@ -37,6 +38,6 @@ export default function ProfileScreen() {
           </View>
         )}
       </View>
-    </ScreenWrapper>
+    </SafeAreaView>
   );
 }
