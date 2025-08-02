@@ -150,7 +150,7 @@ export default function GeminiScreen() {
     };
 
     const examplePrompts = [
-        "Write a song about me",
+        "Write a song about Ocean Waves",
         "Can you help me plan a vacation?",
         "How do I make the perfect cup of coffee?",
         "What's the best way to learn a new language?",
@@ -165,7 +165,7 @@ export default function GeminiScreen() {
                         <Ionicons name="arrow-back" size={24} />
                     </TouchableOpacity>
                 </Link>
-                <Text style={styles.headerTitle}>Gemini Playground</Text>
+                <Text style={styles.headerTitle}>GenAI Playground</Text>
                 <View style={{ width: 24 }} />
             </View>
 

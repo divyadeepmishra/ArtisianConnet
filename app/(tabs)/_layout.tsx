@@ -41,7 +41,8 @@ export default function TabsLayout() {
         options={{
           title: 'Help Center',
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'help-buoy' : 'help-buoy-outline'} size={size} color={color} />
+            //<Ionicons name={focused ? 'chatbubble' : 'chatbubble-outline'} size={size} color={color} />
+             <Ionicons name={focused ? 'headset' : 'headset-outline'} size={size} color={color} />
           ),
         }}
       />
