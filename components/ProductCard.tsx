@@ -25,7 +25,7 @@ export default function ProductCard({ product }: { product: Product }) {
           {product.name}
         </Text>
         <Text className="text-lg font-bold text-gray-900 mt-1">
-          ${product.price.toFixed(2)}
+          ₹{product.price.toFixed(2)}
         </Text>
       </View>
     </TouchableOpacity>

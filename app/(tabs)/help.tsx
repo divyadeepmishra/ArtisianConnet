@@ -95,14 +95,14 @@ export default function HelpScreen() {
   };
 
   return (
-     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom' ,'left', 'right']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Support Assistant</Text>
       </View>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
+         keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
       >
         <FlatList
           ref={flatListRef}
@@ -129,9 +129,10 @@ export default function HelpScreen() {
             placeholderTextColor="#9CA3AF"
             style={styles.textInput}
             multiline
+            
           />
           <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
-            <Ionicons name="arrow-up-circle" size={32} color="#007AFF" />
+            <Ionicons name="arrow-forward-circle" size={32} color="#007AFF" />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
   botText: { color: 'black' },
   userText: { color: 'white' },
   typingIndicator: { paddingLeft: 20, paddingBottom: 4 },
-  inputContainer: { flexDirection: 'row', alignItems: 'center', padding: 8, borderTopWidth: 1, borderTopColor: '#E5E7EB', backgroundColor: 'white' },
+  inputContainer: { flexDirection: 'row', alignItems: 'center', padding: 8, borderTopWidth: 1, borderTopColor: '#E5E7EB', backgroundColor: 'white', paddingBottom: 30, },
   textInput: { flex: 1, backgroundColor: '#F3F4F6', borderRadius: 20, paddingVertical: 10, paddingHorizontal: 16, fontSize: 16 },
   sendButton: { marginLeft: 8 },
 });

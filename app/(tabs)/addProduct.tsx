@@ -106,7 +106,7 @@ export default function AddProductScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView>
           <View className="p-6">
-            <Text className="text-3xl font-extrabold text-gray-900 mb-6">List a New Item</Text>
+            <Text className="text-3xl font-extrabold text-gray-900 mb-6">List an Item for Sale</Text>
 
             <TouchableOpacity
               onPress={pickImage}
@@ -142,9 +142,9 @@ export default function AddProductScreen() {
               style={{ textAlignVertical: 'top' }}
             />
 
-            <Text className="text-base font-medium text-gray-700 mb-2">Price ($)</Text>
+            <Text className="text-base font-medium text-gray-700 mb-2">Price (₹)</Text>
             <TextInput
-              placeholder="e.g., 25.00"
+              placeholder="e.g., 199.00"
               placeholderTextColor="#A1A1AA"
               value={price}
               onChangeText={setPrice}
