@@ -1,4 +1,3 @@
-// in app/(tabs)/help.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -13,6 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Link } from 'expo-router';
+import { router } from 'expo-router';
 
 const WIT_AI_TOKEN = process.env.EXPO_PUBLIC_WIT_AI_TOKEN;
 
@@ -33,7 +34,7 @@ export default function HelpScreen() {
     setMessages([
       {
         id: 'init',
-        text: 'Hello! As an AI assistant, I can help with questions about order tracking and return policies.',
+        text: 'Hello! As an AI assistant, I can help with questions about order tracking or return policies.',
         from: 'bot',
       },
     ]);
@@ -47,7 +48,6 @@ export default function HelpScreen() {
     setInput('');
     setIsTyping(true);
     
-    // Check if the token is present
     if (!WIT_AI_TOKEN) {
         console.error("Wit.ai token is missing. Check your .env file for EXPO_PUBLIC_WIT_AI_TOKEN.");
         const errorMessage: Message = { id: Math.random().toString(), text: "Configuration error. Could not connect to the AI service.", from: 'bot' };
@@ -68,7 +68,7 @@ export default function HelpScreen() {
       if (intent === 'track_order') {
         botResponseText = "You can track all your orders from the 'Profile' tab.";
       } else if (intent === 'return_policy') {
-        botResponseText = "Our policy allows for returns within 30 days of purchase. You can initiate a return from your order history.";
+        botResponseText = "Our policy allows for returns within 30 days of purchase.";
       }
       
       const botMessage: Message = { id: Math.random().toString(), text: botResponseText, from: 'bot' };
@@ -95,10 +95,14 @@ export default function HelpScreen() {
   };
 
   return (
-     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom' ,'left', 'right']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Support Assistant</Text>
-      </View>
+     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+       <View style={styles.header}>
+    <TouchableOpacity onPress={() => router.back()}>
+      <Ionicons name="arrow-back" size={24} color="#000" />
+    </TouchableOpacity>
+    <Text style={styles.headerTitle}>Support Assistant</Text>
+    <View style={{ width: 24 }} />
+  </View>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingView}
@@ -129,7 +133,6 @@ export default function HelpScreen() {
             placeholderTextColor="#9CA3AF"
             style={styles.textInput}
             multiline
-            
           />
           <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
             <Ionicons name="arrow-forward-circle" size={32} color="#007AFF" />
@@ -140,11 +143,18 @@ export default function HelpScreen() {
   );
 }
 
-// Using StyleSheet for better performance and organization
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F9FAFB' },
-  header: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#E5E7EB', backgroundColor: 'white' },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', textAlign: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    backgroundColor: 'white',
+  },
+  headerTitle: { fontSize: 20, fontWeight: 'bold' },
   keyboardAvoidingView: { flex: 1 },
   chatArea: { flex: 1 },
   messageContainer: { maxWidth: '80%', marginVertical: 4 },
@@ -156,7 +166,22 @@ const styles = StyleSheet.create({
   botText: { color: 'black' },
   userText: { color: 'white' },
   typingIndicator: { paddingLeft: 20, paddingBottom: 4 },
-  inputContainer: { flexDirection: 'row', alignItems: 'center', padding: 8, borderTopWidth: 1, borderTopColor: '#E5E7EB', backgroundColor: 'white', paddingBottom: 30, },
-  textInput: { flex: 1, backgroundColor: '#F3F4F6', borderRadius: 20, paddingVertical: 10, paddingHorizontal: 16, fontSize: 16 },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    backgroundColor: 'white',
+  },
+  textInput: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    fontSize: 16,
+  },
   sendButton: { marginLeft: 8 },
 });

@@ -28,6 +28,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="cart"
+        options={{
+          title: 'Cart',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'cart' : 'cart-outline'} size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
@@ -36,16 +45,8 @@ export default function TabsLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="help"
-        options={{
-          title: 'Help Center',
-          tabBarIcon: ({ color, size, focused }) => (
-            //<Ionicons name={focused ? 'chatbubble' : 'chatbubble-outline'} size={size} color={color} />
-             <Ionicons name={focused ? 'headset' : 'headset-outline'} size={size} color={color} />
-          ),
-        }}
-      />
+
     </Tabs>
+
   );
 }

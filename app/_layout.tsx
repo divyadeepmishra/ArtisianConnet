@@ -1,7 +1,8 @@
-import "../global.css";
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { Slot } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import "../global.css";
+import { CartProvider } from "./(context)/CartContext";
 
 const tokenCache = {
   async getToken(key: string) {
@@ -28,12 +29,15 @@ export default function RootLayout() {
   }
 
   return (
-      <ClerkProvider
-        tokenCache={tokenCache}
-        publishableKey={publishableKey}
-      >
+    <ClerkProvider
+      tokenCache={tokenCache}
+      publishableKey={publishableKey}
+    >
+      {/* 2. Wrap the Slot with the CartProvider */}
+      <CartProvider>
         {/* The Slot will render the current page */}
         <Slot />
-      </ClerkProvider>
+      </CartProvider>
+    </ClerkProvider>
   );
 }
