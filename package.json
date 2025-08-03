@@ -23,6 +23,7 @@
     "@react-navigation/stack": "^7.4.5",
     "@supabase/supabase-js": "^2.53.0",
     "base64-arraybuffer": "^1.0.2",
+    "eas-cli": "^16.17.4",
     "expo": "~53.0.20",
     "expo-auth-session": "~6.2.1",
     "expo-blur": "~14.1.5",
@@ -50,6 +51,7 @@
     "react-native-gesture-handler": "~2.24.0",
     "react-native-icons": "^0.7.1",
     "react-native-markdown-display": "^7.0.2",
+    "react-native-razorpay": "^2.3.0",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
@@ -68,6 +70,7 @@
     "eslint-config-expo": "~9.2.0",
     "postcss": "^8.5.6",
     "prettier-plugin-tailwindcss": "^0.5.11",
+    "supabase": "^2.33.9",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.3"
   },
