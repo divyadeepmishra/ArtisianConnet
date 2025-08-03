@@ -1,111 +1,179 @@
+// app/(tabs)/index.tsx
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   FlatList,
   TextInput,
   ActivityIndicator,
   Text,
+  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useState, useEffect } from 'react';
-import { createSupabaseWithClerk } from '../../lib/supabaseWithClerk';
 import { useAuth } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
-import ProductCard from '../../components/ProductCard'; 
- 
+import { createSupabaseWithClerk } from '../../lib/supabaseWithClerk';
+import ProductCard from '../../components/ProductCard';
 
 export default function HomeScreen() {
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
   const [products, setProducts] = useState<any[]>([]);
+  const [likedProductIds, setLikedProductIds] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState<string>(''); 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
+
+  // Debounce logic
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    const token = await getToken();
+    if (!token) {
+      setProducts([]);
+      setIsLoading(false);
+      return;
+    }
+
+    const supabase = createSupabaseWithClerk(token);
+
+    const { data: productData } = await supabase
+      .from('products')
+      .select('*')
+      .ilike('name', `%${debouncedQuery}%`);
+    setProducts(productData || []);
+
+    if (userId) {
+      const { data: likedData } = await supabase
+        .from('liked_products')
+        .select('product_id')
+        .eq('user_id', userId);
+      setLikedProductIds(new Set(likedData?.map(item => item.product_id)));
+    }
+
+    setIsLoading(false);
+  }, [debouncedQuery, userId]);
 
   useEffect(() => {
-    const handler= setTimeout(async() => {
-      if (!searchQuery){      // If search is empty, load all products
-        const token = await getToken();
-        if (!token) {
-          console.error('No auth token found');
-          setIsLoading(false);
-          return;
-        }
-        const supabase = createSupabaseWithClerk(token);
+    fetchData();
+  }, [fetchData]);
 
-        const { data, error } = await supabase.from('products').select('*');
+  const handleToggleLike = async (productId: number) => {
+    const token = await getToken();
+    if (!token || !userId) return;
+    const supabase = createSupabaseWithClerk(token);
 
-        if (error) {
-          console.error('Error fetching products:', error);
-        } else {
-          setProducts(data || []);
-        }
-        setIsLoading(false);
-        return;
-      } else {    // If search query is present, filter products
-        setIsLoading(true);
-        const token = await getToken();
-        if (!token) {
-          console.error('No auth token found');
-          setIsLoading(false);
-          return;
-        }
-        const supabase = createSupabaseWithClerk(token);
-
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .ilike('name', `%${searchQuery}%`); // Case-insensitive search
-
-        if (error) {
-          console.error('Error fetching products:', error);
-        } else {
-          setProducts(data || []);
-        }
-        setIsLoading(false);  
-      }
-    }, 300);
-      return () => {
-        clearTimeout(handler); // Cleanup 
-      }; 
-  }, [searchQuery, getToken]); // Re-run effect when searchQuery changes
+    if (likedProductIds.has(productId)) {
+      await supabase
+        .from('liked_products')
+        .delete()
+        .eq('user_id', userId)
+        .eq('product_id', productId);
+      setLikedProductIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(productId);
+        return newSet;
+      });
+    } else {
+      await supabase
+        .from('liked_products')
+        .insert([{ user_id: userId, product_id: productId }]);
+      setLikedProductIds(prev => new Set(prev).add(productId));
+    }
+  };
 
   const renderEmptyList = () => (
-    <View className="flex-1 items-center justify-center mt-20">
+    <View style={styles.emptyContainer}>
       <Ionicons name="alert-circle-outline" size={60} color="#9CA3AF" />
-      <Text className="text-lg text-gray-500 mt-4">No items found.</Text>
-      <Text className="text-sm text-gray-400">Try a different search term.</Text>
+      <Text style={styles.emptyText}>No items found.</Text>
+      {debouncedQuery && <Text style={styles.emptySub}>Try a different keyword.</Text>}
     </View>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'left', 'right']}>
-      <View className="p-4">
-        <Text className="text-3xl font-extrabold text-gray-900">ArtisianConnet</Text>
-        
-        {/* Modern Search Bar */}
-        <View className="flex-row items-center bg-white border border-gray-200 rounded-xl p-3 mt-4 mb-2">
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <Text style={styles.title}>🛍️ ArtisanConnect</Text>
+        <View style={styles.searchBar}>
           <Ionicons name="search" size={20} color="#9CA3AF" />
           <TextInput
-            placeholder="Search for handcrafted items..."
-            placeholderTextColor="#9CA3AF"
             value={searchQuery}
             onChangeText={setSearchQuery}
-            className="flex-1 ml-3 text-base"
+            placeholder="Search handcrafted products..."
+            placeholderTextColor="#9CA3AF"
+            style={styles.searchInput}
           />
         </View>
       </View>
 
-      {/* Show a loading spinner while fetching data */}
       {isLoading ? (
-        <ActivityIndicator size="large" color="#000" className="mt-16" />
+        <ActivityIndicator size="large" color="#4B5563" style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={products}
-          renderItem={({ item }) => <ProductCard product={item} />}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={2} // This creates the two-column grid
-          contentContainerStyle={{ paddingHorizontal: 8 }}
-          ListEmptyComponent={renderEmptyList} // Show this when there are no products
+          renderItem={({ item }) => (
+            <ProductCard
+              product={item}
+              isLiked={likedProductIds.has(item.id)}
+              onToggleLike={handleToggleLike}
+            />
+          )}
+          keyExtractor={item => item.id.toString()}
+          numColumns={2}
+          contentContainerStyle={styles.grid}
+          ListEmptyComponent={renderEmptyList}
         />
       )}
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F3F4F6' },
+  header: { padding: 16 },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#111827',
+  },
+  grid: {
+    paddingBottom: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginTop: 12,
+  },
+  emptySub: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginTop: 4,
+  },
+});
