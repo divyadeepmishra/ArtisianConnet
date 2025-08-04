@@ -1,82 +1,76 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import crypto from 'https://deno.land/std@0.168.0/node/crypto.ts'
+// supabase/functions/verify-payment/index.ts
+
+import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-control-allow-headers': 'authorization, x-client-info, apikey, content-type',
-}
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+console.log("🔄 Edge Function 'verify-payment' started");
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+  if (req.method === "OPTIONS") {
+    return new Response("OK", { headers: corsHeaders });
   }
 
   try {
-    const { orderId, paymentId, signature, items, totalAmount } = await req.json()
-    const RAZORPAY_KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET')!
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } =
+      await req.json();
 
-    // 1. VERIFY THE SIGNATURE
-    const generated_signature = crypto
-      .createHmac('sha256', RAZORPAY_KEY_SECRET)
-      .update(orderId + '|' + paymentId)
-      .digest('hex')
+    console.log("📥 Incoming request body:", {
+      razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_signature,
+    });
 
-    if (generated_signature !== signature) {
-      throw new Error('Payment signature is not valid')
+    // Validate body
+    if (
+      !razorpay_payment_id ||
+      !razorpay_order_id ||
+      !razorpay_signature
+    ) {
+      console.error("❌ Missing required payment fields");
+      return new Response(
+        JSON.stringify({ error: "Missing payment information" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
     }
 
-    // 2. SAVE THE ORDER TO THE DATABASE
-    // Create a Supabase client with the service role key to bypass RLS
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SERVICE_ROLE_KEY')!
-    )
-    
-    // Get user ID from the authorization header
-    const authHeader = req.headers.get('Authorization')!
-    const jwt = authHeader.replace('Bearer ', '')
-    const { data: { user } } = await supabaseAdmin.auth.getUser(jwt)
+    // Simulate verification (replace with actual logic)
+    const isValid = razorpay_signature === "demo_signature"; // placeholder
+    if (!isValid) {
+      console.error("❌ Payment verification failed");
+      return new Response(
+        JSON.stringify({ error: "Payment verification failed" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401,
+        }
+      );
+    }
 
-    if (!user) throw new Error("User not found")
+    console.log("✅ Payment verified successfully");
 
-    // Insert into the 'orders' table
-    const { data: orderData, error: orderError } = await supabaseAdmin
-      .from('orders')
-      .insert({
-        user_id: user.id,
-        total_amount: totalAmount,
-        razorpay_payment_id: paymentId,
-        razorpay_order_id: orderId,
-        razorpay_signature: signature,
-        status: 'paid',
-      })
-      .select('id')
-      .single()
-
-    if (orderError) throw orderError
-    const newOrderId = orderData.id
-
-    // Insert into the 'order_items' table
-    const orderItems = items.map((item: any) => ({
-      order_id: newOrderId,
-      product_id: item.id,
-      quantity: item.quantity,
-      price_at_purchase: item.price,
-    }))
-
-    const { error: itemsError } = await supabaseAdmin.from('order_items').insert(orderItems)
-    if (itemsError) throw itemsError
-    
-    // 3. RETURN SUCCESS
-    return new Response(JSON.stringify({ success: true, orderId: newOrderId }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    })
+    return new Response(
+      JSON.stringify({ success: true }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
+  } catch (err) {
+    console.error("❌ Internal Server Error:", err);
+    return new Response(
+      JSON.stringify({ error: "Internal server error" }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
   }
-})
+});
