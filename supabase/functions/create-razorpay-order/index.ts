@@ -1,6 +1,4 @@
-import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
-
-declare const Deno: any;
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,7 +14,7 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { amount } = await req.json();
+    const { amount, description } = await req.json();
     const credentials = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
 
     const response = await fetch('https://api.razorpay.com/v1/orders', {
@@ -26,31 +24,35 @@ serve(async (req: Request) => {
         'Authorization': `Basic ${credentials}`,
       },
       body: JSON.stringify({
-        amount: amount * 100,
+        amount: amount * 100,  // Always in paise
         currency: 'INR',
-        receipt: `receipt_order_${Date.now()}`,
+        receipt: `rcptid_${Math.random().toString(36).substring(2, 10)}`,
+        payment_capture: 1,
+        notes: { description },
       }),
     });
 
     const responseData = await response.json();
-
     if (!response.ok) {
       console.error('Razorpay API Error:', responseData);
-      throw new Error(responseData.error?.description || 'Failed to create Razorpay order');
+      throw new Error(
+        responseData.error?.description || 'Failed to create Razorpay Order'
+      );
     }
 
+    // Return the order object (not a payment link)
     return new Response(JSON.stringify(responseData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (error) {
     console.error('Function Error:', error);
-    const errorMessage = (error && typeof error === 'object' && 'message' in error)
-      ? (error as { message: string }).message
-      : String(error);
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });
   }
 });
+
+
+//  npx supabase functions deploy create-razorpay-order --no-verify-jwt
