@@ -1,4 +1,4 @@
-// app/(main)/payment.tsx
+// in app/(main)/payment.tsx
 
 import { useAuth } from '@clerk/clerk-expo';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -8,15 +8,15 @@ import { WebView } from 'react-native-webview';
 import { useCart } from '../(context)/CartContext';
 
 export default function PaymentScreen() {
-  const params = useLocalSearchParams<{ order: string }>();
-  const router = useRouter();
-  const { getToken } = useAuth();
-  const { clearCart } = useCart();
+    const params = useLocalSearchParams<{ order: string, items: string }>();
+    const router = useRouter();
+    const { getToken } = useAuth();
+    const { clearCart, totalPrice, items } = useCart(); // Get items and totalPrice
 
-  const order = params.order ? JSON.parse(params.order) : null;
+    const order = params.order ? JSON.parse(params.order) : null;
 
-  const generatePaymentHtml = (orderData: any) => {
-    return `
+    const generatePaymentHtml = (orderData: any) => {
+        return `
       <html>
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -58,86 +58,80 @@ export default function PaymentScreen() {
         </body>
       </html>
     `;
-  };
+    };
 
-  const handleWebViewMessage = async (event: any) => {
-    const data = JSON.parse(event.nativeEvent.data);
-    console.log('WebView Message:', data);
+    const handleWebViewMessage = async (event: any) => {
+        const data = JSON.parse(event.nativeEvent.data);
 
-    switch (data.status) {
-      case 'success':
-        try {
-          const token = await getToken();
-          if (!token) throw new Error("Authentication failed.");
+        switch (data.status) {
+            case 'success':
+                // Payment successful on the app, now verify it on the backend
+                try {
+                    const token = await getToken();
+                    if (!token) throw new Error("Authentication failed.");
 
-          const response = await fetch('https://ugsmjhaztnlhmdgpwvje.supabase.co/functions/v1/verify-payment', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              razorpay_payment_id: data.paymentId,
-              razorpay_order_id: data.orderId,
-              razorpay_signature: data.signature,
-            }),
-          });
+                    const response = await fetch('https://ugsmjhaztnlhmdgpwvje.supabase.co/functions/v1/verify-payment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                            razorpay_payment_id: data.paymentId,
+                            razorpay_order_id: data.orderId,
+                            razorpay_signature: data.signature,
+                            items: items,
+                            totalAmount: totalPrice + 50,
+                        }),
+                    });
 
-          const text = await response.text();
-          console.log('Raw response:', text);
+                    const result = await response.json();
 
-          let result;
-          try {
-            result = JSON.parse(text);
-          } catch (err) {
-            throw new Error('Server returned invalid JSON');
-          }
+                    if (!response.ok || result.error) {
+                        throw new Error(result.error || 'Payment verification failed on server.');
+                    }
 
-          if (!response.ok || result.error) {
-            throw new Error(result.error || 'Payment verification failed on server.');
-          }
+                    Alert.alert('Payment Verified!', 'Your order has been successfully placed.');
+                    clearCart();
+                    router.replace('/(main)/orders'); // Navigate to orders page
 
-          Alert.alert('Payment Verified!', 'Your order has been successfully placed.');
-          clearCart();
-          router.replace('/(main)/orders');
-        } catch (error) {
-          console.error('Verification error:', error.message);
-          Alert.alert('Verification Failed', error.message);
-          router.replace('/(tabs)/cart');
+                } catch (error) {
+                    Alert.alert('Verification Failed', error.message);
+                    router.replace('/(tabs)/cart');
+                }
+                break;
+
+            case 'failed':
+                Alert.alert('Payment Failed', data.error_description || 'Something went wrong.');
+                router.back();
+                break;
+
+            case 'cancelled':
+                router.back();
+                break;
         }
-        break;
+    };
 
-      case 'failed':
-        Alert.alert('Payment Failed', data.error_description || 'Something went wrong.');
-        router.back();
-        break;
-
-      case 'cancelled':
-        router.back();
-        break;
+    if (!order) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" />
+                <Text>Loading Payment...</Text>
+            </View>
+        );
     }
-  };
 
-  if (!order) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-        <Text>Loading Payment...</Text>
-      </View>
+        <WebView
+            source={{ html: generatePaymentHtml(order) }}
+            style={styles.container}
+            onMessage={handleWebViewMessage}
+        />
     );
-  }
-
-  return (
-    <WebView
-      source={{ html: generatePaymentHtml(order) }}
-      style={styles.container}
-      onMessage={handleWebViewMessage}
-    />
-  );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+    container: {
+        flex: 1,
+    },
 });

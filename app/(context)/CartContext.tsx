@@ -1,6 +1,6 @@
 // in app/context/CartContext.tsx
 
-import React, { createContext, useContext, useState, PropsWithChildren, useMemo } from 'react';
+import React, { createContext, PropsWithChildren, useContext, useMemo, useState } from 'react';
 
 type CartItem = {
   id: number;
@@ -13,9 +13,10 @@ type CartItem = {
 type CartContextType = {
   items: CartItem[];
   addToCart: (product: any) => void;
-  removeFromCart: (productId: number) => void; // New function
+  removeFromCart: (productId: number) => void;
   incrementQuantity: (productId: number) => void;
   decrementQuantity: (productId: number) => void;
+  clearCart: () => void; // Added clearCart to the type
   totalPrice: number;
 };
 
@@ -37,7 +38,7 @@ export const CartProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
     console.log(`'${product.name}' added to cart!`);
   };
 
-  // ADDED: New function to completely remove an item from the cart
+  // Function to completely remove an item from the cart
   const removeFromCart = (productId: number) => {
     setItems(prevItems => prevItems.filter(item => item.id !== productId));
     console.log(`Product ID ${productId} removed from cart!`);
@@ -62,13 +63,29 @@ export const CartProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
       return prevItems.filter(item => item.id !== productId);
     });
   };
-  
+
+  // Function to clear all items from the cart
+  const clearCart = () => {
+    setItems([]);
+    console.log('Cart cleared!');
+  };
+
   const totalPrice = useMemo(() => {
     return items.reduce((total, item) => total + item.price * item.quantity, 0);
   }, [items]);
 
   return (
-    <CartContext.Provider value={{ items, addToCart, removeFromCart, incrementQuantity, decrementQuantity, totalPrice }}>
+    <CartContext.Provider
+      value={{
+        items,
+        addToCart,
+        removeFromCart,
+        incrementQuantity,
+        decrementQuantity,
+        clearCart,
+        totalPrice
+      }}
+    >
       {children}
     </CartContext.Provider>
   );

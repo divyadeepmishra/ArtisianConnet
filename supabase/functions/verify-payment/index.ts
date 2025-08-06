@@ -1,9 +1,5 @@
-// supabase/functions/verify-payment/index.ts
-
-import { HmacSha256 } from "https://deno.land/std@0.192.0/crypto/hmac.ts";
-import { encodeHex } from "https://deno.land/std@0.192.0/encoding/hex.ts";
-import { encode as toUtf8 } from "https://deno.land/std@0.192.0/encoding/utf8.ts";
-import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
+import { encodeHex } from "https://deno.land/std@0.208.0/encoding/hex.ts";
+import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,7 +18,6 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-
     const {
       razorpay_payment_id,
       razorpay_order_id,
@@ -54,11 +49,26 @@ serve(async (req) => {
       );
     }
 
-    // ✅ Signature Verification
+    // ✅ Signature Verification using Web Crypto API
     const bodyToHash = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const hmac = new HmacSha256(toUtf8(RAZORPAY_SECRET));
-    hmac.update(toUtf8(bodyToHash));
-    const generatedSignature = encodeHex(hmac.digest());
+
+    // Convert secret and message to Uint8Array
+    const encoder = new TextEncoder();
+    const secretKey = encoder.encode(RAZORPAY_SECRET);
+    const message = encoder.encode(bodyToHash);
+
+    // Import the secret as a crypto key
+    const cryptoKey = await crypto.subtle.importKey(
+      "raw",
+      secretKey,
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+
+    // Generate HMAC signature
+    const signature = await crypto.subtle.sign("HMAC", cryptoKey, message);
+    const generatedSignature = encodeHex(new Uint8Array(signature));
 
     const isValid = generatedSignature === razorpay_signature;
 
@@ -74,7 +84,6 @@ serve(async (req) => {
     }
 
     console.log("✅ Payment verified successfully");
-
     return new Response(
       JSON.stringify({ success: true }),
       {
