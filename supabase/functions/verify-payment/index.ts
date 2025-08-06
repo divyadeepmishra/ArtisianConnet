@@ -1,12 +1,17 @@
 // supabase/functions/verify-payment/index.ts
 
+import { HmacSha256 } from "https://deno.land/std@0.192.0/crypto/hmac.ts";
+import { encodeHex } from "https://deno.land/std@0.192.0/encoding/hex.ts";
+import { encode as toUtf8 } from "https://deno.land/std@0.192.0/encoding/utf8.ts";
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "Authorization, x-client-info, apikey, content-type",
 };
+
+const RAZORPAY_SECRET = Deno.env.get("RAZORPAY_SECRET") || "";
 
 console.log("🔄 Edge Function 'verify-payment' started");
 
@@ -16,16 +21,24 @@ serve(async (req) => {
   }
 
   try {
-    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } =
-      await req.json();
+    const body = await req.json();
+
+    const {
+      razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_signature,
+      items,
+      totalAmount,
+    } = body;
 
     console.log("📥 Incoming request body:", {
       razorpay_payment_id,
       razorpay_order_id,
       razorpay_signature,
+      items,
+      totalAmount,
     });
 
-    // Validate body
     if (
       !razorpay_payment_id ||
       !razorpay_order_id ||
@@ -41,8 +54,14 @@ serve(async (req) => {
       );
     }
 
-    // Simulate verification (replace with actual logic)
-    const isValid = razorpay_signature === "demo_signature"; // placeholder
+    // ✅ Signature Verification
+    const bodyToHash = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const hmac = new HmacSha256(toUtf8(RAZORPAY_SECRET));
+    hmac.update(toUtf8(bodyToHash));
+    const generatedSignature = encodeHex(hmac.digest());
+
+    const isValid = generatedSignature === razorpay_signature;
+
     if (!isValid) {
       console.error("❌ Payment verification failed");
       return new Response(
