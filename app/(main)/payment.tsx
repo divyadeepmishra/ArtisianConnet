@@ -8,15 +8,15 @@ import { WebView } from 'react-native-webview';
 import { useCart } from '../(context)/CartContext';
 
 export default function PaymentScreen() {
-    const params = useLocalSearchParams<{ order: string, items: string }>();
-    const router = useRouter();
-    const { getToken } = useAuth();
-    const { clearCart, totalPrice, items } = useCart(); // Get items and totalPrice
+  const params = useLocalSearchParams<{ order: string, items: string }>();
+  const router = useRouter();
+  const { getToken, userId } = useAuth();
+  const { clearCart, totalPrice, items } = useCart(); // Get items and totalPrice
 
-    const order = params.order ? JSON.parse(params.order) : null;
+  const order = params.order ? JSON.parse(params.order) : null;
 
-    const generatePaymentHtml = (orderData: any) => {
-        return `
+  const generatePaymentHtml = (orderData: any) => {
+    return `
       <html>
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -58,80 +58,85 @@ export default function PaymentScreen() {
         </body>
       </html>
     `;
-    };
+  };
 
-    const handleWebViewMessage = async (event: any) => {
-        const data = JSON.parse(event.nativeEvent.data);
+  const handleWebViewMessage = async (event: any) => {
+    const data = JSON.parse(event.nativeEvent.data);
 
-        switch (data.status) {
-            case 'success':
-                // Payment successful on the app, now verify it on the backend
-                try {
-                    const token = await getToken();
-                    if (!token) throw new Error("Authentication failed.");
+    switch (data.status) {
+      case 'success':
+        // Payment successful on the app, now verify it on the backend
+        try {
+          const token = await getToken();
+          if (!token) throw new Error("Authentication failed.");
 
-                    const response = await fetch('https://ugsmjhaztnlhmdgpwvje.supabase.co/functions/v1/verify-payment', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`,
-                        },
-                        body: JSON.stringify({
-                            razorpay_payment_id: data.paymentId,
-                            razorpay_order_id: data.orderId,
-                            razorpay_signature: data.signature,
-                            items: items,
-                            totalAmount: totalPrice + 50,
-                        }),
-                    });
 
-                    const result = await response.json();
+  
 
-                    if (!response.ok || result.error) {
-                        throw new Error(result.error || 'Payment verification failed on server.');
-                    }
 
-                    Alert.alert('Payment Verified!', 'Your order has been successfully placed.');
-                    clearCart();
-                    router.replace('/(main)/orders'); // Navigate to orders page
+          const response = await fetch('https://ugsmjhaztnlhmdgpwvje.supabase.co/functions/v1/verify-payment', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              razorpay_payment_id: data.paymentId,
+              razorpay_order_id: data.orderId,
+              razorpay_signature: data.signature,
+              items: items,
+              totalAmount: totalPrice, // Assuming 50 is the shipping cost
+              userId: userId,
+            }),
+          });
 
-                } catch (error) {
-                    Alert.alert('Verification Failed', error.message);
-                    router.replace('/(tabs)/cart');
-                }
-                break;
+          const result = await response.json();
 
-            case 'failed':
-                Alert.alert('Payment Failed', data.error_description || 'Something went wrong.');
-                router.back();
-                break;
+          if (!response.ok || result.error) {
+            throw new Error(result.error || 'Payment verification failed on server.');
+          }
 
-            case 'cancelled':
-                router.back();
-                break;
+          Alert.alert('Payment Verified!', 'Your order has been successfully placed.');
+          clearCart();
+          router.replace('/(main)/orders'); // Navigate to orders page
+
+        } catch (error) {
+          Alert.alert('Verification Failed', error.message);
+          router.replace('/(tabs)/cart');
         }
-    };
+        break;
 
-    if (!order) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" />
-                <Text>Loading Payment...</Text>
-            </View>
-        );
+      case 'failed':
+        Alert.alert('Payment Failed', data.error_description || 'Something went wrong.');
+        router.back();
+        break;
+
+      case 'cancelled':
+        router.back();
+        break;
     }
+  };
 
+  if (!order) {
     return (
-        <WebView
-            source={{ html: generatePaymentHtml(order) }}
-            style={styles.container}
-            onMessage={handleWebViewMessage}
-        />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+        <Text>Loading Payment...</Text>
+      </View>
     );
+  }
+
+  return (
+    <WebView
+      source={{ html: generatePaymentHtml(order) }}
+      style={styles.container}
+      onMessage={handleWebViewMessage}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
+  container: {
+    flex: 1,
+  },
 });
