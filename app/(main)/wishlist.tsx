@@ -1,167 +1,140 @@
-import React, { useState, useRef } from 'react';
-import {
-  View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity
-} from 'react-native';
+// app/(tabs)/wishlist.tsx
+import React, { useState, useCallback } from 'react';
+import { FlatList, ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
-import { Link, useFocusEffect } from 'expo-router';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { createSupabaseWithClerk } from '../../lib/supabaseWithClerk';
 import ProductCard from '../../components/ProductCard';
 
 export default function WishlistScreen() {
-  const { getToken, userId } = useAuth();
-  const [likedProducts, setLikedProducts] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { userId, isLoaded, getToken } = useAuth();
+  const navigation = useNavigation();
+  const [likedProducts, setLikedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // This ref will act as a "lock" to prevent multiple fetches at the same time.
-  const isFetching = useRef(false);
+  const fetchLikedProducts = async () => {
+    if (!userId) return;
 
-  useFocusEffect(
-    React.useCallback(() => {
-      const fetchLikedProducts = async () => {
-        // 1. If a fetch is already in progress, do nothing.
-        if (isFetching.current) return;
+    try {
+      setLoading(true);
 
-        // 2. Lock the function to prevent another fetch from starting.
-        isFetching.current = true;
-        setIsLoading(true);
+      const token = await getToken();
+      if (!token) throw new Error('No token found');
 
-        try {
-          if (!userId) return;
+      const supabase = createSupabaseWithClerk(token);
 
-          const token = await getToken();
-          if (!token) return;
-          
-          const supabase = createSupabaseWithClerk(token);
+      const { data, error } = await supabase
+        .from('liked_products')
+        .select('products(*)')
+        .eq('user_id', userId);
 
-          const { data: likedData, error: likedError } = await supabase
-            .from('liked_products')
-            .select('product_id')
-            .eq('user_id', userId);
+      if (error) throw error;
 
-          if (likedError) throw likedError;
-          
-          const productIds = likedData?.map(item => item.product_id);
+      const products = data.map((item) => item.products);
+      setLikedProducts(products || []);
+    } catch (err) {
+      console.error('Error fetching wishlist:', err);
+      setLikedProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-          if (!productIds || productIds.length === 0) {
-            setLikedProducts([]);
-            return;
-          }
+  const toggleLike = async (productId, isCurrentlyLiked) => {
+    try {
+      const token = await getToken();
+      if (!token) throw new Error('No token found');
 
-          const { data: productData, error: productError } = await supabase
-            .from('products')
-            .select('*')
-            .in('id', productIds);
+      const supabase = createSupabaseWithClerk(token);
 
-          if (productError) throw productError;
-          setLikedProducts(productData ?? []);
-        } catch (err) {
-          console.error('Error fetching liked products:', err);
-          setLikedProducts([]);
-        } finally {
-          // 3. ALWAYS release the lock and stop loading.
-          isFetching.current = false;
-          setIsLoading(false);
-        }
-      };
+      if (isCurrentlyLiked) {
+        await supabase
+          .from('liked_products')
+          .delete()
+          .eq('user_id', userId)
+          .eq('product_id', productId);
+      } else {
+        await supabase
+          .from('liked_products')
+          .insert([{ user_id: userId, product_id: productId }]);
+      }
 
       fetchLikedProducts();
-    }, [userId, getToken])
+    } catch (err) {
+      console.error('Error toggling like:', err);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isLoaded && userId) {
+        fetchLikedProducts();
+      }
+    }, [isLoaded, userId])
   );
 
-  const handleUnlikeItem = React.useCallback(async (productId: number) => {
-    setLikedProducts(prev => prev.filter(p => p.id !== productId));
-    
-    const token = await getToken({ template: 'supabase' });
-    if (!token || !userId) return;
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.center}>
+        <ActivityIndicator size="large" color="#000" />
+      </SafeAreaView>
+    );
+  }
 
-    const supabase = createSupabaseWithClerk(token);
-    await supabase
-      .from('liked_products')
-      .delete()
-      .match({ user_id: userId, product_id: productId });
-  }, [getToken, userId]);
-  
-  const renderEmptyList = () => (
-    <View style={styles.emptyContainer}>
-      <Ionicons name="heart-outline" size={60} color="#9CA3AF" />
-      <Text style={styles.emptyText}>Your Wishlist is Empty</Text>
-      <Text style={styles.emptySub}>Tap the heart on any product to save it here.</Text>
-    </View>
-  );
-
-  const renderItem = React.useCallback(({ item }: { item: any }) => (
-    <ProductCard
-      product={item}
-      isLiked={true}
-      onToggleLike={() => handleUnlikeItem(item.id)}
-    />
-  ), [handleUnlikeItem]);
+  if (!likedProducts.length) {
+    return (
+      <SafeAreaView style={styles.center}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={{ fontSize: 16, color: '#555' }}>Your wishlist is empty ❤️</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container}>
+      {/* Back Button */}
       <View style={styles.header}>
-        <Link href="/profile" asChild>
-          <TouchableOpacity>
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
-          </TouchableOpacity>
-        </Link>
-        <Text style={styles.title}>My Wishlist</Text>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Liked Items</Text>
       </View>
 
-      {isLoading && likedProducts.length === 0 ? (
-         <ActivityIndicator size="large" color="#4B5563" style={{ marginTop: 40 }} />
-      ) : (
-        <FlatList
-          data={likedProducts}
-          renderItem={renderItem}
-          keyExtractor={item => item.id.toString()}
-          numColumns={2}
-          contentContainerStyle={styles.grid}
-          ListEmptyComponent={renderEmptyList}
-        />
-      )}
+      <FlatList
+        data={likedProducts}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <ProductCard
+            product={item}
+            isLiked={true}
+            onToggleLike={toggleLike}
+          />
+        )}
+        numColumns={2}
+        showsVerticalScrollIndicator={false}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F3F4F6' },
+  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 10 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    backgroundColor: 'white',
+    paddingVertical: 10,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1F2937',
+  backButton: {
+    padding: 6,
+    marginRight: 8,
   },
-  grid: {
-    padding: 8,
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  emptyText: {
+  headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#6B7280',
-    marginTop: 12,
-  },
-  emptySub: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    marginTop: 4,
-    textAlign: 'center',
   },
 });

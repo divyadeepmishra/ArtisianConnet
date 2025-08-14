@@ -61,7 +61,7 @@ export default function ProfileScreen() {
             href="/wishlist"
             icon="heart-outline"
             title="My Wishlist"
-            subtitle="View your saved items"
+            subtitle="View your liked items"
             color="#FEE2E2" // Soft Red
           />
           <ProfileMenuItem

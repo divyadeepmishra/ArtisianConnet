@@ -100,7 +100,7 @@ export default function GeminiScreen() {
             for (let i = 0; i < fullText.length; i++) {
                 if (isStopped.current) break;
                 animatedText += fullText[i];
-                await new Promise(res => setTimeout(res, 10));
+                await new Promise(res => setTimeout(res, 1));
                 setMessages(prev =>
                     prev.map(msg =>
                         msg.id === typingId.current ? { ...msg, text: animatedText } : msg
