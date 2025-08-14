@@ -51,7 +51,7 @@ export default function ProfileScreen() {
         {/* Menu Section */}
         <View style={styles.menuSection}>
           <ProfileMenuItem
-            href="/" ///
+            href="/orders"
             icon="cube-outline"
             title="My Orders"
             subtitle="Check your order history"
@@ -71,12 +71,19 @@ export default function ProfileScreen() {
             subtitle="Get support and assistance"
             color="#D1FAE5" // Soft Green
           />
-           <ProfileMenuItem
+          <ProfileMenuItem
             href="/ai"
             icon="sparkles-outline"
             title="GenAI Playground"
             subtitle="Get creative with AI"
             color="#FEF3C7" // Soft Amber
+          />
+          <ProfileMenuItem
+            href="/(main)/contact" // The path to our new screen
+            icon="mail-outline"
+            title="Contact Us"
+            subtitle="Send us your feedback or queries"
+            color="#E0F2FE" // Soft Blue
           />
         </View>
 
@@ -99,13 +106,13 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: 24,
   },
-  header: { 
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 32,
     backgroundColor: 'white',
     padding: 16,
-    borderRadius: 16,
+    borderRadius: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -115,23 +122,23 @@ const styles = StyleSheet.create({
   avatar: {
     width: 60,
     height: 60,
-    borderRadius: 30,
+    borderRadius: 25,
     marginRight: 16,
     backgroundColor: '#E5E7EB',
   },
-  greeting: { 
-    fontSize: 22, 
-    fontWeight: 'bold', 
-    color: '#111827' 
+  greeting: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#111827'
   },
-  email: { 
-    fontSize: 14, 
-    color: '#6B7280', 
-    marginTop: 4 
+  email: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4
   },
-  menuSection: { 
-    backgroundColor: 'white', 
-    borderRadius: 16, 
+  menuSection: {
+    backgroundColor: 'white',
+    borderRadius: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -147,34 +154,30 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     padding: 10,
-    borderRadius: 12, // Softer corners
+    borderRadius: 10, // Softer corners
     marginRight: 16,
   },
   textContainer: { flex: 1 },
-  menuTitle: { 
-    fontSize: 16, 
-    fontWeight: '600', 
-    color: '#1F2937' 
+  menuTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937'
   },
-  menuSubtitle: { 
+  menuSubtitle: {
     fontSize: 13, // Slightly larger subtitle
-    color: '#6B7280', 
-    marginTop: 2 
+    color: '#6B7280',
+    marginTop: 2
   },
   signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    borderRadius: 16,
+    borderRadius: 10,
     marginTop: 40,
-    backgroundColor: '#FDF2F2',
+    backgroundColor: 'white',
     borderColor: '#FECACA',
-    borderWidth: 0.2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
+    borderWidth: 0.1,
     elevation: 1,
   },
   signOutText: {
