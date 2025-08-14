@@ -65,6 +65,13 @@ export default function ProfileScreen() {
             color="#FEE2E2" // Soft Red
           />
           <ProfileMenuItem
+            href="/(main)/my-product"
+            icon="storefront-outline"
+            title="My Products"
+            subtitle="Manage your product listings"
+            color="#F3E8FF" // Soft Purple
+          />
+          <ProfileMenuItem
             href="/help"
             icon="headset-outline"
             title="Help Center"
