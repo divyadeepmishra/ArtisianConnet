@@ -97,7 +97,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>🛍️ ArtisanConnect</Text>
+        <Text style={styles.title}>🛍️ ArtConnet</Text>
         <View style={styles.searchBar}>
           <Ionicons name="search" size={20} color="#9CA3AF" />
           <TextInput

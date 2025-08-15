@@ -18,6 +18,7 @@ export default function MainLayout() {
       <Stack.Screen name="payment" options={{ presentation: 'modal' }} />
       <Stack.Screen name="contact" />
       <Stack.Screen name="my-products" />
+      <Stack.Screen name="chat-room" /> 
     </Stack>
   );
 }
