@@ -66,9 +66,9 @@ export default function HelpScreen() {
       let botResponseText = "I'm sorry, I don't understand. I can help with questions about order tracking or our return policy.";
 
       if (intent === 'track_order') {
-        botResponseText = "You can track all your orders from the 'Profile' tab.";
+        botResponseText = "You can track all your orders from the 'Profile' tab. Go to 'My Orders' to see your order history and track shipments by clicking on your order.";
       } else if (intent === 'return_policy') {
-        botResponseText = "Our policy allows for returns within 30 days of purchase.";
+        botResponseText = "Our policy allows for returns within 30 days of purchase. Please ensure items are in original condition. You can initiate a return/replace from the 'My Orders' section in your profile by clicking on your order.";
       }
       
       const botMessage: Message = { id: Math.random().toString(), text: botResponseText, from: 'bot' };
