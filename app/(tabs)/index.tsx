@@ -165,7 +165,7 @@ export default function HomeScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 4 }}
             >
-              <View className="flex-row space-x-3">
+              <View className="flex-row space-x-3 space-y-4">
                 {filterTabs.map((tab) => (
                   <TouchableOpacity
                     key={tab.id}

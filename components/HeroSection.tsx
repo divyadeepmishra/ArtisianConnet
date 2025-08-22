@@ -1,4 +1,4 @@
-import LinearGradient from 'expo-linear-gradient';
+import {LinearGradient} from 'expo-linear-gradient';
 import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function HeroSection() {
