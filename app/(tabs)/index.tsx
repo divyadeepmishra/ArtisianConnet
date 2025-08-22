@@ -3,13 +3,22 @@ import { useAuth } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import Animated, {
+  FadeInRight,
+  FadeInUp,
+  SlideInDown,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CategoryFilter from '../../components/CategoryFilter';
 import HeroSection from '../../components/HeroSection';
@@ -43,6 +52,9 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedFilter, setSelectedFilter] = useState('deals');
 
+  // Animation values
+  const countdownValue = useSharedValue(0);
+
   // Debounce logic
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -50,6 +62,18 @@ export default function HomeScreen() {
     }, 400);
     return () => clearTimeout(timeout);
   }, [searchQuery]);
+
+  // Countdown animation
+  useEffect(() => {
+    countdownValue.value = withRepeat(
+      withSequence(
+        withSpring(1, { duration: 1000 }),
+        withSpring(0, { duration: 1000 })
+      ),
+      -1,
+      true
+    );
+  }, []);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -115,91 +139,111 @@ export default function HomeScreen() {
   };
 
   const renderEmptyList = () => (
-    <View className="flex-1 items-center justify-center py-12">
-      <Ionicons name="bag-outline" size={64} color="#9CA3AF" />
-      <Text className="text-lg font-semibold text-gray-700 mt-4 mb-2">No products found</Text>
-      <Text className="text-gray-500">Try adjusting your search or filters</Text>
-    </View>
+    <Animated.View 
+      entering={FadeInUp.delay(300)}
+      className="flex-1 items-center justify-center py-20"
+    >
+      <View className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full items-center justify-center mb-6">
+        <Ionicons name="bag-outline" size={48} color="#9CA3AF" />
+      </View>
+      <Text className="text-xl font-bold text-gray-700 mb-2">No products found</Text>
+      <Text className="text-gray-500 text-center">Try adjusting your search or filters</Text>
+    </Animated.View>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-gradient-to-br from-gray-50 to-white" edges={['top']}>
       {/* Header */}
-      <View className="bg-white border-b border-gray-200 px-4 py-4">
+      <Animated.View 
+        entering={SlideInDown.delay(100)}
+        className="bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 py-4"
+      >
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center space-x-3">
-            <View className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg items-center justify-center">
+            <View className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl items-center justify-center shadow-lg">
               <Text className="text-white font-bold text-sm">AC</Text>
             </View>
             <Text className="font-bold text-xl text-gray-900">ArtsCrafts</Text>
           </View>
-          <TouchableOpacity className="flex-row items-center space-x-2 bg-gray-100 rounded-lg px-3 py-2">
+          <TouchableOpacity className="flex-row items-center space-x-2 bg-gradient-to-r from-gray-100 to-gray-200 rounded-2xl px-4 py-2 shadow-sm">
             <Ionicons name="bag-outline" size={20} color="#374151" />
-            <Text className="font-medium text-gray-700">Cart</Text>
-            <View className="bg-red-500 rounded-full w-5 h-5 items-center justify-center">
+            <Text className="font-semibold text-gray-700">Cart</Text>
+            <View className="bg-gradient-to-r from-red-500 to-red-600 rounded-full w-6 h-6 items-center justify-center">
               <Text className="text-white text-xs font-bold">3</Text>
             </View>
           </TouchableOpacity>
         </View>
-      </View>
+      </Animated.View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="px-4 py-6 space-y-6">
+        <View className="px-4 py-6 space-y-8">
           {/* Hero Section */}
-          <HeroSection />
+          <Animated.View entering={FadeInUp.delay(200)}>
+            <HeroSection />
+          </Animated.View>
 
           {/* Search and Filters */}
-          <View className="space-y-6">
+          <Animated.View entering={FadeInUp.delay(300)} className="space-y-6">
             <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
             <CategoryFilter 
               categories={categories} 
               selectedCategory={selectedCategory} 
               onCategoryChange={setSelectedCategory} 
             />
-          </View>
+          </Animated.View>
 
           {/* Filter Tabs */}
-          <View className="space-y-4">
+          <Animated.View entering={FadeInUp.delay(400)} className="space-y-4">
             <ScrollView 
               horizontal 
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 4 }}
             >
-              <View className="flex-row space-x-3 space-y-4">
-                {filterTabs.map((tab) => (
-                  <TouchableOpacity
+              <View className="flex-row space-x-3">
+                {filterTabs.map((tab, index) => (
+                  <Animated.View
                     key={tab.id}
-                    onPress={() => setSelectedFilter(tab.id)}
-                    className={`
-                      flex-row items-center space-x-1 px-4 py-2 rounded-full
-                      ${selectedFilter === tab.id 
-                        ? 'bg-gray-900' 
-                        : 'bg-white border border-gray-200'
-                      }
-                    `}
+                    entering={FadeInRight.delay(500 + index * 100)}
                   >
-                    {tab.icon && <Text className="text-sm">{tab.icon}</Text>}
-                    <Text className={`
-                      text-sm font-medium
-                      ${selectedFilter === tab.id ? 'text-white' : 'text-gray-700'}
-                    `}>
-                      {tab.name}
-                    </Text>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setSelectedFilter(tab.id)}
+                      className={`
+                        flex-row items-center space-x-2 px-5 py-3 rounded-2xl shadow-sm
+                        ${selectedFilter === tab.id 
+                          ? 'bg-gradient-to-r from-gray-900 to-gray-800 shadow-lg' 
+                          : 'bg-white border border-gray-200'
+                        }
+                      `}
+                    >
+                      {tab.icon && <Text className="text-sm">{tab.icon}</Text>}
+                      <Text className={`
+                        text-sm font-semibold
+                        ${selectedFilter === tab.id ? 'text-white' : 'text-gray-700'}
+                      `}>
+                        {tab.name}
+                      </Text>
+                    </TouchableOpacity>
+                  </Animated.View>
                 ))}
               </View>
             </ScrollView>
-          </View>
+          </Animated.View>
 
           {/* Holiday Sales Section */}
-          <View className="space-y-4">
+          <Animated.View entering={FadeInUp.delay(500)} className="space-y-4">
             <View className="flex-row items-center justify-between">
               <Text className="text-2xl font-bold text-gray-900">Holiday Sales</Text>
-              <View className="flex-row items-center space-x-2 bg-red-100 px-3 py-1 rounded-full">
+              <View className="flex-row items-center space-x-2 bg-gradient-to-r from-red-100 to-red-200 px-4 py-2 rounded-2xl">
                 <Ionicons name="flame" size={16} color="#DC2626" />
-                <Text className="text-red-700 font-medium text-sm">Hot Deals</Text>
+                <Text className="text-red-700 font-semibold text-sm">Hot Deals</Text>
               </View>
-              <Text className="text-sm text-gray-500">Closing in: 2d 14h 30m</Text>
+              <Animated.View 
+                className="flex-row items-center space-x-1"
+                style={{ opacity: countdownValue }}
+              >
+                <Text className="text-sm text-gray-500">Closing in:</Text>
+                <Text className="text-sm font-semibold text-gray-700">2d 14h 30m</Text>
+              </Animated.View>
             </View>
 
             {isLoading ? (
@@ -209,12 +253,17 @@ export default function HomeScreen() {
             ) : (
               <FlatList
                 data={products}
-                renderItem={({ item }) => (
-                  <ProductCard
-                    product={item}
-                    isLiked={likedProductIds.has(item.id)}
-                    onToggleLike={handleToggleLike}
-                  />
+                renderItem={({ item, index }) => (
+                  <Animated.View
+                    entering={FadeInUp.delay(600 + index * 100)}
+                    className="flex-1"
+                  >
+                    <ProductCard
+                      product={item}
+                      isLiked={likedProductIds.has(item.id)}
+                      onToggleLike={handleToggleLike}
+                    />
+                  </Animated.View>
                 )}
                 keyExtractor={item => item.id.toString()}
                 numColumns={2}
@@ -223,7 +272,7 @@ export default function HomeScreen() {
                 ListEmptyComponent={renderEmptyList}
               />
             )}
-          </View>
+          </Animated.View>
         </View>
       </ScrollView>
     </SafeAreaView>

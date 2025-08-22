@@ -8,13 +8,20 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
 import Markdown from 'react-native-markdown-display';
+import Animated, {
+    FadeInUp,
+    SlideInDown,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withSpring
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
@@ -42,13 +49,28 @@ export default function GeminiScreen() {
     const typingId = useRef<string | null>(null);
     const isStopped = useRef(false);
 
+    // Animation values
+    const pulseValue = useSharedValue(1);
+
     const thinkingFrames = [
         "Thinking.🤔",
         "Thinking....🤔",
         "Thinking........🤔",
     ];
-    // Track thinking interval globally to clear it properly
+    
     const thinkingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    useEffect(() => {
+        // Pulse animation for the AI icon
+        pulseValue.value = withRepeat(
+            withSequence(
+                withSpring(1.1, { duration: 1000 }),
+                withSpring(1, { duration: 1000 })
+            ),
+            -1,
+            true
+        );
+    }, []);
 
     useEffect(() => {
         if (isTyping && thinkingIntervalRef.current === null) {
@@ -103,7 +125,6 @@ export default function GeminiScreen() {
             const result = await model.generateContent(input);
             const fullText = result.response.text();
 
-            // ❗ Stop "Thinking..." animation before starting the response animation
             if (thinkingIntervalRef.current) {
                 clearInterval(thinkingIntervalRef.current);
                 thinkingIntervalRef.current = null;
@@ -146,18 +167,26 @@ export default function GeminiScreen() {
 
     const renderMessage = ({ item }: { item: Message }) => {
         const isBot = item.from === 'bot';
-        const bubbleStyle = isBot ? styles.botBubble : styles.userBubble;
 
         return (
-            <View style={[styles.messageContainer, isBot ? styles.botContainer : styles.userContainer]}>
-                <View style={[styles.bubble, bubbleStyle]}>
+            <Animated.View 
+                entering={FadeInUp.delay(200)}
+                className={`max-w-[85%] mb-4 ${isBot ? 'self-start' : 'self-end'}`}
+            >
+                <View className={`
+                    p-4 rounded-3xl shadow-sm
+                    ${isBot 
+                        ? 'bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-300' 
+                        : 'bg-gradient-to-r from-blue-500 to-purple-600'
+                    }
+                `}>
                     {isBot ? (
                         <Markdown style={markdownStyles}>{item.text}</Markdown>
                     ) : (
-                        <Text style={styles.userText}>{item.text}</Text>
+                        <Text className="text-white font-medium text-base">{item.text}</Text>
                     )}
                 </View>
-            </View>
+            </Animated.View>
         );
     };
 
@@ -170,150 +199,166 @@ export default function GeminiScreen() {
     ];
 
     return (
-        <SafeAreaView style={styles.safeArea}>
-            <View style={styles.header}>
-                <Link href="/profile" asChild>
-                    <TouchableOpacity>
-                        <Ionicons name="arrow-back" size={24} />
-                    </TouchableOpacity>
-                </Link>
-                <Text style={styles.headerTitle}>GenAI Playground</Text>
-                <View style={{ width: 24 }} />
-            </View>
+        <SafeAreaView className="flex-1 bg-gradient-to-br from-blue-50 via-white to-purple-50">
+            {/* Header */}
+            <Animated.View 
+                entering={SlideInDown.delay(100)}
+                className="bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 py-4"
+            >
+                <View className="flex-row items-center justify-between">
+                    <Link href="/profile" asChild>
+                        <TouchableOpacity className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center">
+                            <Ionicons name="arrow-back" size={20} color="#374151" />
+                        </TouchableOpacity>
+                    </Link>
+                    <View className="flex-row items-center space-x-2">
+                        <Animated.View style={{ transform: [{ scale: pulseValue }] }}>
+                            <Ionicons name="sparkles" size={24} color="#3B82F6" />
+                        </Animated.View>
+                        <Text className="text-xl font-bold text-gray-900">AI Assistant</Text>
+                    </View>
+                    <View className="w-10" />
+                </View>
+            </Animated.View>
 
             {!GEMINI_API_KEY && (
-                <View style={styles.warningContainer}>
-                    <Ionicons name="warning" size={24} color="#F59E0B" />
-                    <Text style={styles.warningText}>
-                        API Key Missing. Please set EXPO_PUBLIC_GEMINI_API_KEY in your .env file.
-                    </Text>
-                </View>
+                <Animated.View 
+                    entering={FadeInUp.delay(200)}
+                    className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 mx-4 mt-4 p-4 rounded-2xl"
+                >
+                    <View className="flex-row items-center space-x-3">
+                        <Ionicons name="warning" size={24} color="#F59E0B" />
+                        <Text className="text-yellow-800 font-medium flex-1">
+                            API Key Missing. Please set EXPO_PUBLIC_GEMINI_API_KEY in your .env file.
+                        </Text>
+                    </View>
+                </Animated.View>
             )}
 
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.keyboardAvoidingView}
+                className="flex-1"
                 keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
             >
                 {messages.length === 0 ? (
-                    <View style={styles.emptyContainer}>
-                        <Ionicons name="sparkles" size={60} color="#9CA3AF" />
-                        <Text style={styles.emptyText}>Ask me anything!</Text>
-                        <Text style={styles.emptySubText}>I can write songs, give advice, or explain complex topics.</Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingTop: 20 }}>
-                            {examplePrompts.map(prompt => (
-                                <TouchableOpacity key={prompt} onPress={() => setInput(prompt)} style={styles.promptChip}>
-                                    <Text style={styles.promptChipText}>{prompt}</Text>
-                                </TouchableOpacity>
-                            ))}
+                    <Animated.View 
+                        entering={FadeInUp.delay(300)}
+                        className="flex-1 justify-center items-center px-8"
+                    >
+                        <View className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl items-center justify-center shadow-2xl mb-8">
+                            <Ionicons name="sparkles" size={48} color="white" />
+                        </View>
+                        <Text className="text-2xl font-bold text-gray-900 mb-4 text-center">
+                            Ask me anything! ✨
+                        </Text>
+                        <Text className="text-gray-600 text-center mb-8 leading-6">
+                            I can write songs, give advice, explain complex topics, or help you with creative projects.
+                        </Text>
+                        
+                        <ScrollView 
+                            horizontal 
+                            showsHorizontalScrollIndicator={false} 
+                            contentContainerStyle={{ paddingHorizontal: 20 }}
+                            className="mb-8"
+                        >
+                            <View className="flex-row space-x-3">
+                                {examplePrompts.map((prompt, index) => (
+                                    <Animated.View
+                                        key={prompt}
+                                        entering={FadeInUp.delay(400 + index * 100)}
+                                    >
+                                        <TouchableOpacity 
+                                            onPress={() => setInput(prompt)}
+                                            className="bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm"
+                                        >
+                                            <Text className="text-gray-700 font-medium text-sm">{prompt}</Text>
+                                        </TouchableOpacity>
+                                    </Animated.View>
+                                ))}
+                            </View>
                         </ScrollView>
-                    </View>
+                    </Animated.View>
                 ) : (
                     <FlatList
                         ref={flatListRef}
                         data={messages}
                         renderItem={renderMessage}
                         keyExtractor={item => item.id}
-                        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}
+                        contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
                         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
                         onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                        showsVerticalScrollIndicator={false}
                     />
                 )}
 
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        value={input}
-                        onChangeText={setInput}
-                        placeholder="Write a song, ask for advice..."
-                        placeholderTextColor="#9CA3AF"
-                        style={styles.textInput}
-                        multiline
-                    />
-                    {isTyping ? (
-                        <TouchableOpacity onPress={handleStop} style={styles.stopButton}>
-                            <Ionicons name="stop-circle" size={32} color="red" />
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
-                            <Ionicons name="arrow-forward-circle" size={32} color="#007AFF" />
-                        </TouchableOpacity>
-                    )}
-                </View>
+                {/* Input Container */}
+                <Animated.View 
+                    entering={FadeInUp.delay(500)}
+                    className="bg-white border-t border-gray-100 p-4"
+                >
+                    <View className="flex-row items-end space-x-3">
+                        <View className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3">
+                            <TextInput
+                                value={input}
+                                onChangeText={setInput}
+                                placeholder="Ask me anything..."
+                                placeholderTextColor="#9CA3AF"
+                                className="text-base text-gray-900"
+                                multiline
+                                maxLength={1000}
+                            />
+                        </View>
+                        
+                        {isTyping ? (
+                            <TouchableOpacity 
+                                onPress={handleStop}
+                                className="w-12 h-12 bg-red-500 rounded-2xl items-center justify-center"
+                            >
+                                <Ionicons name="stop" size={24} color="white" />
+                            </TouchableOpacity>
+                        ) : (
+                            <TouchableOpacity 
+                                onPress={handleSend}
+                                disabled={!input.trim()}
+                                className={`w-12 h-12 rounded-2xl items-center justify-center ${
+                                    input.trim() 
+                                        ? 'bg-gradient-to-r from-blue-500 to-purple-600' 
+                                        : 'bg-gray-300'
+                                }`}
+                            >
+                                <Ionicons 
+                                    name="send" 
+                                    size={20} 
+                                    color={input.trim() ? 'white' : '#9CA3AF'} 
+                                />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                </Animated.View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
 
-const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
-    header: {
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E5E7EB',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    headerTitle: { fontSize: 20, fontWeight: 'bold' },
-    warningContainer: {
-        backgroundColor: '#FEF3C7',
-        padding: 12,
-        margin: 16,
-        borderRadius: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    warningText: {
-        color: '#92400E',
-        fontSize: 14,
-        flex: 1,
-    },
-    keyboardAvoidingView: { flex: 1 },
-    emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-    emptyText: { fontSize: 22, fontWeight: 'bold', marginTop: 16 },
-    emptySubText: { fontSize: 16, color: 'gray', marginTop: 8, textAlign: 'center' },
-    promptChip: {
-        backgroundColor: '#F3F4F6',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 16,
-        marginRight: 8,
-    },
-    promptChipText: { fontWeight: '500' },
-    messageContainer: { maxWidth: '80%', marginVertical: 4 },
-    botContainer: { alignSelf: 'flex-start' },
-    userContainer: { alignSelf: 'flex-end' },
-    bubble: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20 },
-    botBubble: { backgroundColor: '#E5E7EB', borderBottomLeftRadius: 4 },
-    userBubble: { backgroundColor: '#007AFF', borderBottomRightRadius: 4 },
-    userText: { color: 'white', fontSize: 16 },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 8,
-        paddingBottom: Platform.OS === 'ios' ? 20 : 12,
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
-        backgroundColor: 'white',
-    },
-    textInput: {
-        flex: 1,
-        backgroundColor: '#F3F4F6',
-        borderRadius: 20,
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        fontSize: 16,
-        marginRight: 8,
-    },
-    sendButton: { padding: 4 },
-    stopButton: {
-        padding: 4
-    },
-});
-
 const markdownStyles = {
-    body: { color: '#111', fontSize: 16 },
+    body: { color: '#111', fontSize: 16, lineHeight: 24 },
     paragraph: { marginTop: 4, marginBottom: 4 },
-    code_block: { backgroundColor: '#F3F4F6', padding: 8, borderRadius: 8 },
+    code_block: { 
+        backgroundColor: '#F3F4F6', 
+        padding: 12, 
+        borderRadius: 12,
+        fontFamily: 'monospace',
+        fontSize: 14
+    },
+    code_inline: {
+        backgroundColor: '#F3F4F6',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 6,
+        fontFamily: 'monospace',
+        fontSize: 14
+    },
+    strong: { fontWeight: '600' as const },
+    em: { fontStyle: 'italic' as const },
+    link: { color: '#3B82F6', textDecorationLine: 'underline' as const },
 };

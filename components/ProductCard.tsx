@@ -4,7 +4,12 @@ import { useAuth } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Alert, Image, Text, TouchableOpacity, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring
+} from 'react-native-reanimated';
 import { useCart } from '../app/(context)/CartContext';
 
 type Product = {
@@ -15,6 +20,7 @@ type Product = {
   seller_id: string;
   original_price?: number;
   category?: string;
+  rating?: number;
 };
 
 type ProductCardProps = {
@@ -35,6 +41,7 @@ export default function ProductCard({
   onDelete
 }: ProductCardProps) {
   const scale = useSharedValue(1);
+  const likeScale = useSharedValue(1);
   const { addToCart, removeFromCart, items } = useCart();
   const { userId, getToken } = useAuth();
   const router = useRouter();
@@ -50,11 +57,30 @@ export default function ProductCard({
     transform: [{ scale: scale.value }]
   }));
 
+  const likeAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: likeScale.value }]
+  }));
+
   const handleLikePress = () => {
     if (onToggleLike && typeof isLiked !== 'undefined') {
-      scale.value = withSpring(1.4, { damping: 10, stiffness: 400 });
-      setTimeout(() => { scale.value = withSpring(1); }, 150);
+      likeScale.value = withSequence(
+        withSpring(1.3, { damping: 8, stiffness: 400 }),
+        withSpring(1, { damping: 12, stiffness: 400 })
+      );
       onToggleLike(product.id, isLiked);
+    }
+  };
+
+  const handleAddToCart = () => {
+    scale.value = withSequence(
+      withSpring(0.95, { damping: 8, stiffness: 400 }),
+      withSpring(1, { damping: 12, stiffness: 400 })
+    );
+    
+    if (isProductInCart) {
+      removeFromCart(product.id);
+    } else {
+      addToCart(product);
     }
   };
 
@@ -88,7 +114,10 @@ export default function ProductCard({
   };
 
   return (
-    <View className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <Animated.View 
+      className="flex-1 bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden"
+      style={animatedStyle}
+    >
       {/* Image Container */}
       <View className="relative">
         <Image
@@ -100,13 +129,13 @@ export default function ProductCard({
         {/* Like Button */}
         {!showAdminControls && (
           <AnimatedTouchableOpacity
-            className="absolute top-3 right-3 w-8 h-8 bg-white/90 rounded-full items-center justify-center"
+            className="absolute top-3 right-3 w-10 h-10 bg-white/95 backdrop-blur-sm rounded-full items-center justify-center shadow-lg"
             onPress={handleLikePress}
-            style={animatedStyle}
+            style={likeAnimatedStyle}
           >
             <Ionicons
               name={isLiked ? 'heart' : 'heart-outline'}
-              size={18}
+              size={20}
               color={isLiked ? '#EF4444' : '#6B7280'}
             />
           </AnimatedTouchableOpacity>
@@ -114,61 +143,67 @@ export default function ProductCard({
 
         {/* Discount Badge */}
         {hasDiscount && (
-          <View className="absolute top-3 left-3 bg-red-500 px-2 py-1 rounded-lg">
-            <Text className="text-white text-xs font-bold">{discountPercentage}% Off</Text>
+          <View className="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-red-600 px-3 py-1.5 rounded-xl shadow-lg">
+            <Text className="text-white text-xs font-bold">{discountPercentage}% OFF</Text>
           </View>
         )}
 
         {/* Category Badge */}
         {product.category && (
-          <View className="absolute bottom-3 left-3 bg-black/70 px-2 py-1 rounded-lg">
-            <Text className="text-white text-xs font-medium capitalize">{product.category}</Text>
+          <View className="absolute bottom-3 left-3 bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-xl">
+            <Text className="text-white text-xs font-semibold capitalize">{product.category}</Text>
+          </View>
+        )}
+
+        {/* Rating Badge */}
+        {product.rating && (
+          <View className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-lg flex-row items-center">
+            <Ionicons name="star" size={12} color="#F59E0B" />
+            <Text className="text-xs font-semibold text-gray-700 ml-1">{product.rating}</Text>
           </View>
         )}
       </View>
 
       {/* Product Info */}
-      <View className="p-3 space-y-2">
+      <View className="p-4 space-y-3">
         {/* Price */}
         <View className="flex-row items-center space-x-2">
           <Text className="text-lg font-bold text-gray-900">₹{product.price.toFixed(2)}</Text>
           {hasDiscount && (
-            <Text className="text-sm text-gray-500 line-through">₹{product.original_price!.toFixed(2)}</Text>
+            <Text className="text-sm text-gray-400 line-through">₹{product.original_price!.toFixed(2)}</Text>
           )}
         </View>
 
         {/* Product Name */}
-        <Text className="text-sm font-medium text-gray-700 leading-tight" numberOfLines={2}>
+        <Text className="text-sm font-semibold text-gray-800 leading-tight" numberOfLines={2}>
           {product.name}
         </Text>
 
         {/* Actions */}
         {showAdminControls ? (
           <TouchableOpacity 
-            className="bg-red-50 border border-red-200 rounded-lg py-2 flex-row items-center justify-center space-x-2"
+            className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-2xl py-3 flex-row items-center justify-center space-x-2"
             onPress={onDelete}
           >
             <Ionicons name="trash-outline" size={16} color="#EF4444" />
-            <Text className="text-red-600 font-medium text-sm">Unlist Product</Text>
+            <Text className="text-red-600 font-semibold text-sm">Unlist Product</Text>
           </TouchableOpacity>
         ) : isMyProduct ? (
-          <View className="bg-green-50 border border-green-200 rounded-lg py-2 flex-row items-center justify-center space-x-2">
+          <View className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-2xl py-3 flex-row items-center justify-center space-x-2">
             <Ionicons name="person-circle-outline" size={16} color="#10B981" />
-            <Text className="text-green-700 font-medium text-sm">Your Listing</Text>
+            <Text className="text-green-700 font-semibold text-sm">Your Listing</Text>
           </View>
         ) : (
           <View className="space-y-2">
             <TouchableOpacity
               className={`
-                rounded-lg py-2 flex-row items-center justify-center space-x-2
+                rounded-2xl py-3 flex-row items-center justify-center space-x-2
                 ${isProductInCart 
-                  ? 'bg-gray-100 border border-gray-200' 
-                  : 'bg-blue-600'
+                  ? 'bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-300' 
+                  : 'bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg'
                 }
               `}
-              onPress={() =>
-                isProductInCart ? removeFromCart(product.id) : addToCart(product)
-              }
+              onPress={handleAddToCart}
             >
               <Ionicons
                 name={isProductInCart ? 'remove-circle-outline' : 'bag-outline'}
@@ -176,23 +211,23 @@ export default function ProductCard({
                 color={isProductInCart ? '#EF4444' : 'white'}
               />
               <Text className={`
-                font-medium text-sm
+                font-semibold text-sm
                 ${isProductInCart ? 'text-red-600' : 'text-white'}
               `}>
-                {isProductInCart ? 'Remove' : 'Add'}
+                {isProductInCart ? 'Remove' : 'Add to Cart'}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              className="bg-gray-100 border border-gray-200 rounded-lg py-2 flex-row items-center justify-center space-x-2"
+              className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-2xl py-3 flex-row items-center justify-center space-x-2"
               onPress={handleContactSeller}
             >
               <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
-              <Text className="text-gray-700 font-medium text-sm">Contact</Text>
+              <Text className="text-gray-700 font-semibold text-sm">Contact Seller</Text>
             </TouchableOpacity>
           </View>
         )}
       </View>
-    </View>
+    </Animated.View>
   );
 }
