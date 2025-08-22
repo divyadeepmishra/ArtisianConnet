@@ -1,5 +1,3 @@
-// in app/context/CartContext.tsx
-
 import React, { createContext, PropsWithChildren, useContext, useMemo, useState } from 'react';
 
 type CartItem = {

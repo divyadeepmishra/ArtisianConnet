@@ -24,7 +24,7 @@ serve(async (req: Request) => {
         'Authorization': `Basic ${credentials}`,
       },
       body: JSON.stringify({
-        amount: amount * 100,  // Always in paise
+        amount: amount * 100,  
         currency: 'INR',
         receipt: `rcptid_${Math.random().toString(36).substring(2, 10)}`,
         payment_capture: 1,
