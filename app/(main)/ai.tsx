@@ -1,29 +1,32 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-    View,
-    TextInput,
-    FlatList,
-    TouchableOpacity,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    ScrollView,
-    Text,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Link } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import {
+    Alert,
+    FlatList,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import Markdown from 'react-native-markdown-display';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 
-if (!GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY is not defined. Please set it in your .env file.");
-}
+// Initialize genAI only if API key is available
+let genAI: GoogleGenerativeAI | null = null;
+let model: any = null;
 
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+if (GEMINI_API_KEY) {
+    genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+}
 
 type Message = {
     id: string;
@@ -73,6 +76,16 @@ export default function GeminiScreen() {
 
     const handleSend = async () => {
         if (!input.trim() || isTyping) return;
+
+        // Check if API key is available
+        if (!GEMINI_API_KEY || !model) {
+            Alert.alert(
+                'API Key Missing',
+                'Please set EXPO_PUBLIC_GEMINI_API_KEY in your .env file to use the AI features.',
+                [{ text: 'OK' }]
+            );
+            return;
+        }
 
         const userMessage: Message = { id: Math.random().toString(), text: input, from: 'user' };
         typingId.current = Math.random().toString();
@@ -126,7 +139,6 @@ export default function GeminiScreen() {
         }
     };
 
-
     const handleStop = () => {
         isStopped.current = true;
         setIsTyping(false);
@@ -168,6 +180,15 @@ export default function GeminiScreen() {
                 <Text style={styles.headerTitle}>GenAI Playground</Text>
                 <View style={{ width: 24 }} />
             </View>
+
+            {!GEMINI_API_KEY && (
+                <View style={styles.warningContainer}>
+                    <Ionicons name="warning" size={24} color="#F59E0B" />
+                    <Text style={styles.warningText}>
+                        API Key Missing. Please set EXPO_PUBLIC_GEMINI_API_KEY in your .env file.
+                    </Text>
+                </View>
+            )}
 
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -234,6 +255,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     headerTitle: { fontSize: 20, fontWeight: 'bold' },
+    warningContainer: {
+        backgroundColor: '#FEF3C7',
+        padding: 12,
+        margin: 16,
+        borderRadius: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    warningText: {
+        color: '#92400E',
+        fontSize: 14,
+        flex: 1,
+    },
     keyboardAvoidingView: { flex: 1 },
     emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
     emptyText: { fontSize: 22, fontWeight: 'bold', marginTop: 16 },

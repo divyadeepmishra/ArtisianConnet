@@ -1,28 +1,27 @@
-import React from 'react';
-import { Text, View, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth, useUser } from '@clerk/clerk-expo';
-import { Link, LinkProps } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Link, LinkProps } from 'expo-router';
+import React from 'react';
+import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type ProfileMenuItemProps = {
   href: LinkProps['href'];
   icon: React.ComponentProps<typeof Ionicons>['name'];
   title: string;
   subtitle: string;
-  // Added a color prop for custom icon backgrounds
   color: string;
 };
 
 const ProfileMenuItem: React.FC<ProfileMenuItemProps> = ({ href, icon, title, subtitle, color }) => (
   <Link href={href} asChild>
-    <TouchableOpacity style={styles.menuItem}>
-      <View style={[styles.iconContainer, { backgroundColor: color }]}>
-        <Ionicons name={icon} size={22} color="#1F2937" />
+    <TouchableOpacity className="flex-row items-center py-4 px-4 border-b border-gray-100 last:border-b-0">
+      <View className={`w-10 h-10 rounded-xl items-center justify-center mr-4 ${color}`}>
+        <Ionicons name={icon} size={20} color="#374151" />
       </View>
-      <View style={styles.textContainer}>
-        <Text style={styles.menuTitle}>{title}</Text>
-        <Text style={styles.menuSubtitle}>{subtitle}</Text>
+      <View className="flex-1">
+        <Text className="text-base font-semibold text-gray-900">{title}</Text>
+        <Text className="text-sm text-gray-500 mt-1">{subtitle}</Text>
       </View>
       <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
     </TouchableOpacity>
@@ -34,163 +33,88 @@ export default function ProfileScreen() {
   const { signOut } = useAuth();
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Main Screen Title */}
-        <Text style={styles.screenTitle}>Account</Text>
+    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View className="bg-white border-b border-gray-200 px-4 py-4">
+          <Text className="text-2xl font-bold text-gray-900">Account</Text>
+        </View>
 
-        {/* User Header Section */}
-        <View style={styles.header}>
-          <Image source={{ uri: user?.imageUrl }} style={styles.avatar} />
-          <View>
-            <Text style={styles.greeting}>Hello, {user?.firstName}</Text>
-            <Text style={styles.email}>{user?.primaryEmailAddress?.emailAddress}</Text>
+        <View className="p-4 space-y-6">
+          {/* User Header Section */}
+          <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <View className="flex-row items-center space-x-4">
+              <Image 
+                source={{ uri: user?.imageUrl }} 
+                className="w-16 h-16 rounded-full bg-gray-200"
+              />
+              <View className="flex-1">
+                <Text className="text-xl font-bold text-gray-900">
+                  Hello, {user?.firstName || 'User'}
+                </Text>
+                <Text className="text-gray-500 mt-1">
+                  {user?.primaryEmailAddress?.emailAddress}
+                </Text>
+              </View>
+            </View>
           </View>
-        </View>
 
-        {/* Menu Section */}
-        <View style={styles.menuSection}>
-          <ProfileMenuItem
-            href="/orders"
-            icon="cube-outline"
-            title="My Orders"
-            subtitle="Check your order history"
-            color="#E0E7FF" // Soft Indigo
-          />
-          <ProfileMenuItem
-            href="/wishlist"
-            icon="heart-outline"
-            title="My Wishlist"
-            subtitle="View your liked items"
-            color="#FEE2E2" // Soft Red
-          />
-          <ProfileMenuItem
-            href="/(main)/my-product"
-            icon="storefront-outline"
-            title="My Products"
-            subtitle="Manage your product listings"
-            color="#F3E8FF" // Soft Purple
-          />
-          <ProfileMenuItem
-            href="/help"
-            icon="headset-outline"
-            title="Help Center"
-            subtitle="Get support and assistance"
-            color="#D1FAE5" // Soft Green
-          />
-          <ProfileMenuItem
-            href="/ai"
-            icon="sparkles-outline"
-            title="GenAI Playground"
-            subtitle="Get creative with AI"
-            color="#FEF3C7" // Soft Amber
-          />
-          <ProfileMenuItem
-            href="/(main)/contact" // The path to our new screen
-            icon="mail-outline"
-            title="Contact Us"
-            subtitle="Send us your feedback or queries"
-            color="#E0F2FE" // Soft Blue
-          />
-        </View>
+          {/* Menu Section */}
+          <View className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <ProfileMenuItem
+              href="/orders"
+              icon="cube-outline"
+              title="My Orders"
+              subtitle="Check your order history"
+              color="bg-indigo-100"
+            />
+            <ProfileMenuItem
+              href="/wishlist"
+              icon="heart-outline"
+              title="My Wishlist"
+              subtitle="View your liked items"
+              color="bg-red-100"
+            />
+            <ProfileMenuItem
+              href="/(main)/my-product"
+              icon="storefront-outline"
+              title="My Products"
+              subtitle="Manage your product listings"
+              color="bg-purple-100"
+            />
+            <ProfileMenuItem
+              href="/help"
+              icon="headset-outline"
+              title="Help Center"
+              subtitle="Get support and assistance"
+              color="bg-green-100"
+            />
+            <ProfileMenuItem
+              href="/ai"
+              icon="sparkles-outline"
+              title="GenAI Playground"
+              subtitle="Get creative with AI"
+              color="bg-yellow-100"
+            />
+            <ProfileMenuItem
+              href="/(main)/contact"
+              icon="mail-outline"
+              title="Contact Us"
+              subtitle="Send us your feedback or queries"
+              color="bg-blue-100"
+            />
+          </View>
 
-        {/* Sign Out Button */}
-        <TouchableOpacity onPress={() => signOut()} style={styles.signOutButton}>
-          <Ionicons name="log-out-outline" size={22} color="#EF4444" />
-          <Text style={styles.signOutText}>Sign Out</Text>
-        </TouchableOpacity>
+          {/* Sign Out Button */}
+          <TouchableOpacity 
+            onPress={() => signOut()} 
+            className="bg-white border border-red-200 rounded-2xl p-4 flex-row items-center justify-center space-x-2"
+          >
+            <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+            <Text className="text-red-600 font-semibold text-base">Sign Out</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F9FAFB' },
-  container: { padding: 24 },
-  screenTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 24,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 32,
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 25,
-    marginRight: 16,
-    backgroundColor: '#E5E7EB',
-  },
-  greeting: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#111827'
-  },
-  email: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 4
-  },
-  menuSection: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    // Removed the bottom border for a cleaner look
-  },
-  iconContainer: {
-    padding: 10,
-    borderRadius: 10, // Softer corners
-    marginRight: 16,
-  },
-  textContainer: { flex: 1 },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937'
-  },
-  menuSubtitle: {
-    fontSize: 13, // Slightly larger subtitle
-    color: '#6B7280',
-    marginTop: 2
-  },
-  signOutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 10,
-    marginTop: 40,
-    backgroundColor: 'white',
-    borderColor: '#FECACA',
-    borderWidth: 0.1,
-    elevation: 1,
-  },
-  signOutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#EF4444',
-    marginLeft: 8,
-  },
-});

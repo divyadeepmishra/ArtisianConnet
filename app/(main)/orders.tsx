@@ -1,9 +1,9 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
-import { Link, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Link, useFocusEffect } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { createSupabaseWithClerk } from '../../lib/supabaseWithClerk';
 
 export default function OrdersScreen() {
@@ -17,7 +17,7 @@ export default function OrdersScreen() {
         if (!userId) return;
 
         isFetching.current = true;
-        if (orders.length === 0) setIsLoading(true); // ✅ only show loader if empty
+        if (orders.length === 0) setIsLoading(true);
 
         try {
             const token = await getToken();
@@ -54,35 +54,55 @@ export default function OrdersScreen() {
         }, [fetchOrders])
     );
 
-    const renderOrderItem = ({ item, index }) => {
+    const getStatusColor = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'completed':
+                return 'text-green-600 bg-green-100';
+            case 'pending':
+                return 'text-yellow-600 bg-yellow-100';
+            case 'cancelled':
+                return 'text-red-600 bg-red-100';
+            default:
+                return 'text-gray-600 bg-gray-100';
+        }
+    };
+
+    const renderOrderItem = ({ item, index }: { item: any; index: number }) => {
         const firstItemImage = item.order_items?.[0]?.products?.image_url;
         const orderNumber = orders.length - index;
         return (
             <Link href={{ pathname: "/(main)/order-detail", params: { orderId: item.id } }} asChild>
                 <TouchableOpacity>
-                    <View style={styles.orderCard}>
-                        <View style={styles.cardHeader}>
-                            <Text style={styles.orderId}>Order #{orderNumber}</Text>
-                            <Text style={styles.orderDate}>
+                    <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-100">
+                        <View className="flex-row items-center justify-between mb-3 pb-3 border-b border-gray-100">
+                            <Text className="text-lg font-semibold text-gray-900">Order #{orderNumber}</Text>
+                            <Text className="text-sm text-gray-500">
                                 {new Date(item.created_at).toLocaleDateString()}
                             </Text>
                         </View>
-                        <View style={styles.cardBody}>
+                        
+                        <View className="flex-row items-center space-x-4">
                             {firstItemImage && (
-                                <Image source={{ uri: firstItemImage }} style={styles.productImage} />
+                                <Image 
+                                    source={{ uri: firstItemImage }} 
+                                    className="w-16 h-16 rounded-xl bg-gray-100"
+                                />
                             )}
-                            <Text style={styles.detailText}>
-                                Total Amount:{' '}
-                                <Text style={styles.amountText}>
-                                    ₹{(Number(item.total_amount) + 50).toFixed(2)}
+                            <View className="flex-1 space-y-2">
+                                <View className="flex-row justify-between items-center">
+                                    <Text className="text-base font-semibold text-gray-900">
+                                        ₹{(Number(item.total_amount) + 50).toFixed(2)}
+                                    </Text>
+                                    <View className={`px-3 py-1 rounded-full ${getStatusColor(item.status)}`}>
+                                        <Text className={`text-xs font-medium capitalize`}>
+                                            {item.status}
+                                        </Text>
+                                    </View>
+                                </View>
+                                <Text className="text-sm text-gray-500">
+                                    Payment ID: {item.razorpay_payment_id}
                                 </Text>
-                            </Text>
-                            <Text style={styles.detailText}>
-                                Status: <Text style={styles.statusText}>{item.status}</Text>
-                            </Text>
-                            <Text style={styles.detailText}>
-                                Payment ID: {item.razorpay_payment_id}
-                            </Text>
+                            </View>
                         </View>
                     </View>
                 </TouchableOpacity>
@@ -91,74 +111,48 @@ export default function OrdersScreen() {
     };
 
     const renderEmptyList = () => (
-        <View style={styles.emptyContainer}>
-            <Ionicons name="receipt-outline" size={60} color="#9CA3AF" />
-            <Text style={styles.emptyText}>No Orders Yet</Text>
-            <Text style={styles.emptySub}>
-                When you buy something, it will show up here.
-            </Text>
+        <View className="flex-1 items-center justify-center py-20">
+            <View className="w-24 h-24 bg-gray-100 rounded-full items-center justify-center mb-6">
+                <Ionicons name="receipt-outline" size={48} color="#9CA3AF" />
+            </View>
+            <Text className="text-xl font-bold text-gray-700 mb-2">No Orders Yet</Text>
+            <Text className="text-gray-500 text-center">When you buy something, it will show up here</Text>
         </View>
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <View style={styles.header}>
-                <Link href="/(tabs)/profile" asChild>
-                    <TouchableOpacity>
-                        <Ionicons name="arrow-back" size={24} color="#1F2937" />
-                    </TouchableOpacity>
-                </Link>
-                <Text style={styles.title}>My Orders</Text>
-                <View style={{ width: 24 }} />
+        <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+            {/* Header */}
+            <View className="bg-white border-b border-gray-200 px-4 py-4">
+                <View className="flex-row items-center justify-between">
+                    <Link href="/(tabs)/profile" asChild>
+                        <TouchableOpacity className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center">
+                            <Ionicons name="arrow-back" size={20} color="#374151" />
+                        </TouchableOpacity>
+                    </Link>
+                    <Text className="text-xl font-bold text-gray-900">My Orders</Text>
+                    <View className="w-10" />
+                </View>
             </View>
 
             {isLoading ? (
-                <ActivityIndicator size="large" color="#4B5563" style={{ flex: 1 }} />
+                <View className="flex-1 items-center justify-center">
+                    <ActivityIndicator size="large" color="#3B82F6" />
+                </View>
             ) : (
                 <FlatList
                     data={orders}
                     renderItem={renderOrderItem}
                     keyExtractor={(item) => item.id.toString()}
                     contentContainerStyle={
-                        orders.length === 0 ? { flex: 1 } : styles.listContainer
+                        orders.length === 0 ? { flex: 1 } : { padding: 16 }
                     }
                     ListEmptyComponent={renderEmptyList}
-                    onRefresh={fetchOrders} // ✅ pull to refresh
+                    onRefresh={fetchOrders}
                     refreshing={isFetching.current}
+                    showsVerticalScrollIndicator={false}
                 />
             )}
         </SafeAreaView>
     );
 }
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F3F4F6' },
-    header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        padding: 16, borderBottomWidth: 1, borderBottomColor: '#E5E7EB', backgroundColor: 'white',
-    },
-    title: { fontSize: 20, fontWeight: '700', color: '#1F2937' },
-    listContainer: { padding: 16 },
-    orderCard: {
-        backgroundColor: 'white', borderRadius: 12, padding: 16, marginBottom: 16,
-        shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05, shadowRadius: 5, elevation: 2,
-    },
-    cardHeader: {
-        flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6', paddingBottom: 12, marginBottom: 12,
-    },
-    orderId: { fontSize: 16, fontWeight: '600', color: '#1F2937' },
-    orderDate: { fontSize: 14, color: '#6B7280' },
-    cardBody: {},
-    productImage: { width: 60, height: 60, borderRadius: 8, marginBottom: 12 },
-    detailText: { fontSize: 14, color: '#6B7280', marginBottom: 4, flexWrap: 'wrap' },
-    amountText: { fontWeight: '600', color: '#111827' },
-    statusText: { fontWeight: '600', color: '#16A34A', textTransform: 'capitalize' },
-    emptyContainer: {
-        flex: 1, alignItems: 'center', justifyContent: 'center',
-        padding: 20, paddingTop: '30%',
-    },
-    emptyText: { fontSize: 18, fontWeight: '600', color: '#6B7280', marginTop: 12 },
-    emptySub: { fontSize: 14, color: '#9CA3AF', marginTop: 4, textAlign: 'center' },
-});

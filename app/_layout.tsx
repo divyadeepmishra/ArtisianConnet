@@ -1,6 +1,7 @@
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { Slot } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import { Text, View } from "react-native";
 import "../global.css";
 import { CartProvider } from "./(context)/CartContext";
 
@@ -25,7 +26,17 @@ export default function RootLayout() {
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   if (!publishableKey) {
-    throw new Error("Missing Clerk Publishable Key. Please set it in your .env file.");
+    // Return a fallback UI instead of throwing an error
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
+          Configuration Required
+        </Text>
+        <Text style={{ textAlign: 'center', color: '#666' }}>
+          Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env file to use authentication features.
+        </Text>
+      </View>
+    );
   }
 
   return (

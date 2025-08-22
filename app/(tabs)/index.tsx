@@ -1,18 +1,37 @@
 // app/(tabs)/index.tsx
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  FlatList,
-  TextInput,
-  ActivityIndicator,
-  Text,
-  StyleSheet,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
-import { createSupabaseWithClerk } from '../../lib/supabaseWithClerk';
+import { useCallback, useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    FlatList,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import CategoryFilter from '../../components/CategoryFilter';
+import HeroSection from '../../components/HeroSection';
 import ProductCard from '../../components/ProductCard';
+import SearchBar from '../../components/SearchBar';
+import { createSupabaseWithClerk } from '../../lib/supabaseWithClerk';
+
+const categories = [
+  { id: 'all', name: 'All', icon: '🎨', count: 0 },
+  { id: 'pottery', name: 'Pottery', icon: '🏺', count: 45 },
+  { id: 'paintings', name: 'Paintings', icon: '🖼️', count: 78 },
+  { id: 'textiles', name: 'Textiles', icon: '🧶', count: 32 },
+  { id: 'sculptures', name: 'Sculptures', icon: '🗿', count: 23 },
+  { id: 'jewelry', name: 'Jewelry', icon: '💍', count: 56 },
+];
+
+const filterTabs = [
+  { id: 'all', name: 'All', icon: null },
+  { id: 'deals', name: 'Deals', icon: '⚡' },
+  { id: 'new', name: 'New', icon: null },
+  { id: 'bestsellers', name: 'Best Sellers', icon: null },
+];
 
 export default function HomeScreen() {
   const { getToken, userId } = useAuth();
@@ -21,6 +40,8 @@ export default function HomeScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedFilter, setSelectedFilter] = useState('deals');
 
   // Debounce logic
   useEffect(() => {
@@ -41,10 +62,17 @@ export default function HomeScreen() {
 
     const supabase = createSupabaseWithClerk(token);
 
-    const { data: productData } = await supabase
-      .from('products')
-      .select('*')
-      .ilike('name', `%${debouncedQuery}%`);
+    let query = supabase.from('products').select('*');
+    
+    if (debouncedQuery) {
+      query = query.ilike('name', `%${debouncedQuery}%`);
+    }
+    
+    if (selectedCategory !== 'all') {
+      query = query.eq('category', selectedCategory);
+    }
+
+    const { data: productData } = await query;
     setProducts(productData || []);
 
     if (userId) {
@@ -56,7 +84,7 @@ export default function HomeScreen() {
     }
 
     setIsLoading(false);
-  }, [debouncedQuery, userId]);
+  }, [debouncedQuery, selectedCategory, userId]);
 
   useEffect(() => {
     fetchData();
@@ -87,93 +115,117 @@ export default function HomeScreen() {
   };
 
   const renderEmptyList = () => (
-    <View style={styles.emptyContainer}>
-      <Ionicons name="alert-circle-outline" size={60} color="#9CA3AF" />
-      <Text style={styles.emptyText}>No items found.</Text>
-      {debouncedQuery && <Text style={styles.emptySub}>Try a different keyword.</Text>}
+    <View className="flex-1 items-center justify-center py-12">
+      <Ionicons name="bag-outline" size={64} color="#9CA3AF" />
+      <Text className="text-lg font-semibold text-gray-700 mt-4 mb-2">No products found</Text>
+      <Text className="text-gray-500">Try adjusting your search or filters</Text>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>🛍️ ArtConnet</Text>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#9CA3AF" />
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search handcrafted products..."
-            placeholderTextColor="#9CA3AF"
-            style={styles.searchInput}
-          />
+    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+      {/* Header */}
+      <View className="bg-white border-b border-gray-200 px-4 py-4">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center space-x-3">
+            <View className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg items-center justify-center">
+              <Text className="text-white font-bold text-sm">AC</Text>
+            </View>
+            <Text className="font-bold text-xl text-gray-900">ArtsCrafts</Text>
+          </View>
+          <TouchableOpacity className="flex-row items-center space-x-2 bg-gray-100 rounded-lg px-3 py-2">
+            <Ionicons name="bag-outline" size={20} color="#374151" />
+            <Text className="font-medium text-gray-700">Cart</Text>
+            <View className="bg-red-500 rounded-full w-5 h-5 items-center justify-center">
+              <Text className="text-white text-xs font-bold">3</Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {isLoading ? (
-        <ActivityIndicator size="large" color="#4B5563" style={{ marginTop: 40 }} />
-      ) : (
-        <FlatList
-          data={products}
-          renderItem={({ item }) => (
-            <ProductCard
-              product={item}
-              isLiked={likedProductIds.has(item.id)}
-              onToggleLike={handleToggleLike}
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <View className="px-4 py-6 space-y-6">
+          {/* Hero Section */}
+          <HeroSection />
+
+          {/* Search and Filters */}
+          <View className="space-y-6">
+            <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+            <CategoryFilter 
+              categories={categories} 
+              selectedCategory={selectedCategory} 
+              onCategoryChange={setSelectedCategory} 
             />
-          )}
-          keyExtractor={item => item.id.toString()}
-          numColumns={2}
-          contentContainerStyle={styles.grid}
-          ListEmptyComponent={renderEmptyList}
-        />
-      )}
+          </View>
+
+          {/* Filter Tabs */}
+          <View className="space-y-4">
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 4 }}
+            >
+              <View className="flex-row space-x-3">
+                {filterTabs.map((tab) => (
+                  <TouchableOpacity
+                    key={tab.id}
+                    onPress={() => setSelectedFilter(tab.id)}
+                    className={`
+                      flex-row items-center space-x-1 px-4 py-2 rounded-full
+                      ${selectedFilter === tab.id 
+                        ? 'bg-gray-900' 
+                        : 'bg-white border border-gray-200'
+                      }
+                    `}
+                  >
+                    {tab.icon && <Text className="text-sm">{tab.icon}</Text>}
+                    <Text className={`
+                      text-sm font-medium
+                      ${selectedFilter === tab.id ? 'text-white' : 'text-gray-700'}
+                    `}>
+                      {tab.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+
+          {/* Holiday Sales Section */}
+          <View className="space-y-4">
+            <View className="flex-row items-center justify-between">
+              <Text className="text-2xl font-bold text-gray-900">Holiday Sales</Text>
+              <View className="flex-row items-center space-x-2 bg-red-100 px-3 py-1 rounded-full">
+                <Ionicons name="flame" size={16} color="#DC2626" />
+                <Text className="text-red-700 font-medium text-sm">Hot Deals</Text>
+              </View>
+              <Text className="text-sm text-gray-500">Closing in: 2d 14h 30m</Text>
+            </View>
+
+            {isLoading ? (
+              <View className="py-12">
+                <ActivityIndicator size="large" color="#3B82F6" />
+              </View>
+            ) : (
+              <FlatList
+                data={products}
+                renderItem={({ item }) => (
+                  <ProductCard
+                    product={item}
+                    isLiked={likedProductIds.has(item.id)}
+                    onToggleLike={handleToggleLike}
+                  />
+                )}
+                keyExtractor={item => item.id.toString()}
+                numColumns={2}
+                scrollEnabled={false}
+                contentContainerStyle={{ gap: 16 }}
+                ListEmptyComponent={renderEmptyList}
+              />
+            )}
+          </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F3F4F6' },
-  header: { padding: 16 },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#1F2937',
-    marginBottom: 12,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    alignItems: 'center',
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 16,
-    color: '#111827',
-  },
-  grid: {
-    paddingBottom: 16,
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    marginTop: 40,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginTop: 12,
-  },
-  emptySub: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    marginTop: 4,
-  },
-});

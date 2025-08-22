@@ -1,137 +1,179 @@
 // in app/(tabs)/cart.tsx
 
-import React, { useState } from 'react';
+import { useAuth } from '@clerk/clerk-expo';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Alert,
-  ActivityIndicator,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Image,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCart } from '../(context)/CartContext';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '@clerk/clerk-expo'; // Import useAuth
-import { useRouter } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
 
 export default function CartScreen() {
   const { items, incrementQuantity, decrementQuantity, totalPrice, clearCart } = useCart();
-  const { getToken } = useAuth(); // Get the getToken function
+  const { getToken } = useAuth();
   const [isPaying, setIsPaying] = useState(false);
   const router = useRouter();
 
-const handleCheckout = async () => {
-  setIsPaying(true);
-  try {
-    const token = await getToken();
-    if (!token) {
-      throw new Error("You are not logged in. Please log in to continue.");
-    }
-
-    const finalAmount = Math.round(totalPrice + 50);
-    
-    // 1. Create Razorpay Order via backend
-    const response = await fetch(
-      'https://ugsmjhaztnlhmdgpwvje.supabase.co/functions/v1/create-razorpay-order',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          amount: finalAmount,
-          description: 'Payment for your order at ArtisanConnect',
-        }),
+  const handleCheckout = async () => {
+    setIsPaying(true);
+    try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error("You are not logged in. Please log in to continue.");
       }
-    );
 
-    const orderData = await response.json();
-    if (!response.ok || orderData.error) {
-      throw new Error(orderData.error || 'Failed to create order.');
+      const finalAmount = Math.round(totalPrice + 50);
+      
+      const response = await fetch(
+        'https://ugsmjhaztnlhmdgpwvje.supabase.co/functions/v1/create-razorpay-order',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            amount: finalAmount,
+            description: 'Payment for your order at ArtisanConnect',
+          }),
+        }
+      );
+
+      const orderData = await response.json();
+      if (!response.ok || orderData.error) {
+        throw new Error(orderData.error || 'Failed to create order.');
+      }
+
+      router.push({
+        pathname: '/(main)/payment',
+        params: { order: JSON.stringify(orderData) }
+      });
+
+    } catch (error) {
+      Alert.alert('Error', `Could not create order: ${error.message}`);
+      console.error("Checkout Error:", error);
+    } finally {
+      setIsPaying(false);
     }
+  };
 
-    // 2. Send order to in-app payment screen
-    router.push({
-      pathname: '/(main)/payment',
-      params: { order: JSON.stringify(orderData) }
-    });
-
-  } catch (error) {
-    Alert.alert('Error', `Could not create order: ${error.message}`);
-    console.error("Checkout Error:", error);
-  } finally {
-    setIsPaying(false);
-  }
-};
-
-  const renderCartItem = ({ item }) => (
-    <View style={styles.itemContainer}>
-      <Image source={{ uri: item.image_url }} style={styles.itemImage} />
-      <View style={styles.itemDetails}>
-        <Text style={styles.itemName} numberOfLines={1}>
-          {item.name}
-        </Text>
-        <Text style={styles.itemPrice}>₹{item.price.toFixed(2)}</Text>
-      </View>
-      <View style={styles.quantityControl}>
-        <TouchableOpacity onPress={() => decrementQuantity(item.id)}>
-          <Ionicons name="remove-circle-outline" size={28} color="#6B7280" />
-        </TouchableOpacity>
-        <Text style={styles.quantityText}>{item.quantity}</Text>
-        <TouchableOpacity onPress={() => incrementQuantity(item.id)}>
-          <Ionicons name="add-circle" size={28} color="#1F2937" />
-        </TouchableOpacity>
+  const renderCartItem = ({ item }: { item: any }) => (
+    <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-100">
+      <View className="flex-row items-center space-x-4">
+        <Image 
+          source={{ uri: item.image_url }} 
+          className="w-16 h-16 rounded-xl"
+        />
+        <View className="flex-1 space-y-1">
+          <Text className="text-base font-semibold text-gray-900" numberOfLines={2}>
+            {item.name}
+          </Text>
+          <Text className="text-lg font-bold text-gray-900">
+            ₹{item.price.toFixed(2)}
+          </Text>
+        </View>
+        <View className="flex-row items-center space-x-3">
+          <TouchableOpacity 
+            onPress={() => decrementQuantity(item.id)}
+            className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
+          >
+            <Ionicons name="remove" size={20} color="#6B7280" />
+          </TouchableOpacity>
+          <Text className="text-lg font-semibold text-gray-900 min-w-[24px] text-center">
+            {item.quantity}
+          </Text>
+          <TouchableOpacity 
+            onPress={() => incrementQuantity(item.id)}
+            className="w-8 h-8 bg-blue-100 rounded-full items-center justify-center"
+          >
+            <Ionicons name="add" size={20} color="#3B82F6" />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
 
   const renderEmptyCart = () => (
-    <View style={styles.emptyContainer}>
-      <Ionicons name="cart-outline" size={80} color="#D1D5DB" />
-      <Text style={styles.emptyText}>Your Cart is Empty</Text>
+    <View className="flex-1 items-center justify-center py-20">
+      <View className="w-24 h-24 bg-gray-100 rounded-full items-center justify-center mb-6">
+        <Ionicons name="bag-outline" size={48} color="#9CA3AF" />
+      </View>
+      <Text className="text-xl font-bold text-gray-700 mb-2">Your Cart is Empty</Text>
+      <Text className="text-gray-500 text-center">Add some beautiful handcrafted items to get started</Text>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Cart</Text>
+    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+      {/* Header */}
+      <View className="bg-white border-b border-gray-200 px-4 py-4">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-2xl font-bold text-gray-900">Shopping Cart</Text>
+          {items.length > 0 && (
+            <TouchableOpacity 
+              onPress={clearCart}
+              className="flex-row items-center space-x-1"
+            >
+              <Ionicons name="trash-outline" size={20} color="#EF4444" />
+              <Text className="text-red-500 font-medium">Clear</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
+
+      {/* Cart Items */}
       <FlatList
         data={items}
         renderItem={renderCartItem}
-        keyExtractor={item => item.id.toString()}
-        contentContainerStyle={{ padding: 16 }}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={{ padding: 16, flexGrow: 1 }}
         ListEmptyComponent={renderEmptyCart}
+        showsVerticalScrollIndicator={false}
       />
+
+      {/* Summary */}
       {items.length > 0 && (
-        <View style={styles.summaryContainer}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>₹{totalPrice.toFixed(2)}</Text>
+        <View className="bg-white border-t border-gray-200 p-6 space-y-4">
+          <View className="space-y-3">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-gray-600">Subtotal</Text>
+              <Text className="text-gray-900 font-semibold">₹{totalPrice.toFixed(2)}</Text>
+            </View>
+            <View className="flex-row justify-between items-center">
+              <Text className="text-gray-600">Shipping</Text>
+              <Text className="text-gray-900 font-semibold">₹50.00</Text>
+            </View>
+            <View className="border-t border-gray-200 pt-3">
+              <View className="flex-row justify-between items-center">
+                <Text className="text-lg font-bold text-gray-900">Total</Text>
+                <Text className="text-lg font-bold text-gray-900">₹{(totalPrice + 50).toFixed(2)}</Text>
+              </View>
+            </View>
           </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Shipping</Text>
-            <Text style={styles.summaryValue}>₹50.00</Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>₹{(totalPrice + 50).toFixed(2)}</Text>
-          </View>
+
           <TouchableOpacity
-            style={[styles.checkoutButton, isPaying && { backgroundColor: '#9CA3AF' }]}
+            className={`
+              rounded-2xl py-4 items-center
+              ${isPaying ? 'bg-gray-300' : 'bg-blue-600'}
+            `}
             onPress={handleCheckout}
             disabled={isPaying}
           >
             {isPaying ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
+              <View className="flex-row items-center space-x-2">
+                <Ionicons name="card-outline" size={20} color="white" />
+                <Text className="text-white font-bold text-lg">Proceed to Checkout</Text>
+              </View>
             )}
           </TouchableOpacity>
         </View>
@@ -139,42 +181,3 @@ const handleCheckout = async () => {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
-  header: {
-    padding: 16, borderBottomWidth: 1, borderBottomColor: '#E5E7EB', backgroundColor: 'white',
-  },
-  title: { fontSize: 24, fontWeight: '800', textAlign: 'center', color: '#111827' },
-  itemContainer: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: 'white',
-    padding: 12, borderRadius: 12, marginBottom: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 2, elevation: 1,
-  },
-  itemImage: { width: 60, height: 60, borderRadius: 8 },
-  itemDetails: { flex: 1, marginLeft: 12 },
-  itemName: { fontSize: 16, fontWeight: '600', color: '#1F2937' },
-  itemPrice: { fontSize: 14, color: '#6B7280', marginTop: 4 },
-  quantityControl: { flexDirection: 'row', alignItems: 'center' },
-  quantityText: { fontSize: 18, fontWeight: '600', marginHorizontal: 12 },
-  summaryContainer: {
-    padding: 20, borderTopWidth: 1, borderTopColor: '#E5E7EB', backgroundColor: 'white',
-  },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  summaryLabel: { fontSize: 16, color: '#6B7280' },
-  summaryValue: { fontSize: 16, fontWeight: '600' },
-  totalRow: {
-    flexDirection: 'row', justifyContent: 'space-between', marginTop: 12,
-    paddingTop: 12, borderTopWidth: 1, borderTopColor: '#E5E7EB',
-  },
-  totalLabel: { fontSize: 18, fontWeight: 'bold' },
-  totalValue: { fontSize: 18, fontWeight: 'bold' },
-  checkoutButton: {
-    backgroundColor: '#111827', padding: 16, borderRadius: 12,
-    alignItems: 'center', marginTop: 20,
-  },
-  checkoutButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
-  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: '30%' },
-  emptyText: { fontSize: 20, fontWeight: 'bold', color: '#374151', marginTop: 16 },
-});

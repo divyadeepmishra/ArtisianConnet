@@ -1,12 +1,11 @@
 // app/components/ProductCard.tsx
 
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { useCart } from '@/app/(context)/CartContext';
 import { useAuth } from '@clerk/clerk-expo';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { Alert, Image, Text, TouchableOpacity, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { useCart } from '../app/(context)/CartContext';
 
 type Product = {
   id: number;
@@ -14,6 +13,8 @@ type Product = {
   price: number;
   image_url: string;
   seller_id: string;
+  original_price?: number;
+  category?: string;
 };
 
 type ProductCardProps = {
@@ -40,6 +41,10 @@ export default function ProductCard({
 
   const isProductInCart = items.some(item => item.id === product.id);
   const isMyProduct = product.seller_id === userId;
+  const hasDiscount = product.original_price && product.original_price > product.price;
+  const discountPercentage = hasDiscount 
+    ? Math.round(((product.original_price! - product.price) / product.original_price!) * 100)
+    : 0;
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }]
@@ -83,203 +88,111 @@ export default function ProductCard({
   };
 
   return (
-    <View style={styles.cardContainer}>
-      <Image
-        source={{ uri: product.image_url }}
-        style={styles.image}
-        resizeMode="cover"
-      />
-
-      <View style={styles.infoContainer}>
-        <View style={styles.textContainer}>
-          <Text style={styles.productName} numberOfLines={2}>
-            {product.name}
-          </Text>
-          <Text style={styles.productPrice}>
-            ₹{product.price.toFixed(2)}
-          </Text>
-        </View>
-
+    <View className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      {/* Image Container */}
+      <View className="relative">
+        <Image
+          source={{ uri: product.image_url }}
+          className="w-full aspect-square"
+          resizeMode="cover"
+        />
+        
+        {/* Like Button */}
         {!showAdminControls && (
           <AnimatedTouchableOpacity
-            style={[styles.likeButton, animatedStyle]}
+            className="absolute top-3 right-3 w-8 h-8 bg-white/90 rounded-full items-center justify-center"
             onPress={handleLikePress}
+            style={animatedStyle}
           >
             <Ionicons
               name={isLiked ? 'heart' : 'heart-outline'}
-              size={22}
+              size={18}
               color={isLiked ? '#EF4444' : '#6B7280'}
             />
           </AnimatedTouchableOpacity>
         )}
+
+        {/* Discount Badge */}
+        {hasDiscount && (
+          <View className="absolute top-3 left-3 bg-red-500 px-2 py-1 rounded-lg">
+            <Text className="text-white text-xs font-bold">{discountPercentage}% Off</Text>
+          </View>
+        )}
+
+        {/* Category Badge */}
+        {product.category && (
+          <View className="absolute bottom-3 left-3 bg-black/70 px-2 py-1 rounded-lg">
+            <Text className="text-white text-xs font-medium capitalize">{product.category}</Text>
+          </View>
+        )}
       </View>
 
-      {/* ACTIONS */}
-      {showAdminControls ? (
-        <TouchableOpacity style={styles.unlistButton} onPress={onDelete}>
-          <Ionicons name="trash-outline" size={16} color="#EF4444" />
-          <Text style={styles.unlistButtonText}>Unlist Product</Text>
-        </TouchableOpacity>
-      ) : isMyProduct ? (
-        <View style={styles.myProductIndicator}>
-          <Ionicons name="person-circle-outline" size={16} color="#10B981" />
-          <Text style={styles.myProductText}>Your Listing</Text>
+      {/* Product Info */}
+      <View className="p-3 space-y-2">
+        {/* Price */}
+        <View className="flex-row items-center space-x-2">
+          <Text className="text-lg font-bold text-gray-900">₹{product.price.toFixed(2)}</Text>
+          {hasDiscount && (
+            <Text className="text-sm text-gray-500 line-through">₹{product.original_price!.toFixed(2)}</Text>
+          )}
         </View>
-      ) : (
-        <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={[
-              styles.cartButton,
-              isProductInCart && styles.removeFromCartButton
-            ]}
-            onPress={() =>
-              isProductInCart ? removeFromCart(product.id) : addToCart(product)
-            }
-          >
-            <Ionicons
-              name={isProductInCart ? 'remove-circle-outline' : 'cart-outline'}
-              size={18}
-              color={isProductInCart ? '#EF4444' : 'white'}
-            />
-            <Text
-              style={[
-                styles.cartButtonText,
-                isProductInCart && styles.removeFromCartButtonText
-              ]}
-            >
-              {isProductInCart ? 'Remove' : 'Add to Cart'}
-            </Text>
-          </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.contactButton}
-            onPress={handleContactSeller}
+        {/* Product Name */}
+        <Text className="text-sm font-medium text-gray-700 leading-tight" numberOfLines={2}>
+          {product.name}
+        </Text>
+
+        {/* Actions */}
+        {showAdminControls ? (
+          <TouchableOpacity 
+            className="bg-red-50 border border-red-200 rounded-lg py-2 flex-row items-center justify-center space-x-2"
+            onPress={onDelete}
           >
-            <Ionicons
-              name="chatbubble-ellipses-outline"
-              size={16}
-              color="white"
-            />
-            <Text style={styles.contactButtonText}>Contact Seller</Text>
+            <Ionicons name="trash-outline" size={16} color="#EF4444" />
+            <Text className="text-red-600 font-medium text-sm">Unlist Product</Text>
           </TouchableOpacity>
-        </View>
-      )}
+        ) : isMyProduct ? (
+          <View className="bg-green-50 border border-green-200 rounded-lg py-2 flex-row items-center justify-center space-x-2">
+            <Ionicons name="person-circle-outline" size={16} color="#10B981" />
+            <Text className="text-green-700 font-medium text-sm">Your Listing</Text>
+          </View>
+        ) : (
+          <View className="space-y-2">
+            <TouchableOpacity
+              className={`
+                rounded-lg py-2 flex-row items-center justify-center space-x-2
+                ${isProductInCart 
+                  ? 'bg-gray-100 border border-gray-200' 
+                  : 'bg-blue-600'
+                }
+              `}
+              onPress={() =>
+                isProductInCart ? removeFromCart(product.id) : addToCart(product)
+              }
+            >
+              <Ionicons
+                name={isProductInCart ? 'remove-circle-outline' : 'bag-outline'}
+                size={16}
+                color={isProductInCart ? '#EF4444' : 'white'}
+              />
+              <Text className={`
+                font-medium text-sm
+                ${isProductInCart ? 'text-red-600' : 'text-white'}
+              `}>
+                {isProductInCart ? 'Remove' : 'Add'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="bg-gray-100 border border-gray-200 rounded-lg py-2 flex-row items-center justify-center space-x-2"
+              onPress={handleContactSeller}
+            >
+              <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
+              <Text className="text-gray-700 font-medium text-sm">Contact</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  cardContainer: {
-    flex: 1,
-    margin: 8,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 2,
-    paddingBottom: 8
-  },
-  image: {
-    width: '100%',
-    aspectRatio: 1,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16
-  },
-  infoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingTop: 12
-  },
-  textContainer: { flex: 1, marginRight: 8 },
-  productName: { fontSize: 14, fontWeight: '500', color: '#1F2937' },
-  productPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginTop: 4
-  },
-  likeButton: { padding: 8 },
-  actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginHorizontal: 12,
-    marginTop: 8,
-    gap: 8
-  },
-  cartButton: {
-    flex: 1,
-    backgroundColor: '#2563EB',
-    borderRadius: 12,
-    paddingVertical: 10,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center'
-  },
-  cartButtonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 14,
-    marginLeft: 6
-  },
-  removeFromCartButton: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#D1D5DB'
-  },
-  removeFromCartButtonText: { color: '#EF4444' },
-  contactButton: {
-    flex: 1,
-    backgroundColor: '#059669',
-    borderRadius: 12,
-    paddingVertical: 10,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center'
-  },
-  contactButtonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 14,
-    marginLeft: 6
-  },
-  myProductIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ECFDF5',
-    borderRadius: 12,
-    paddingVertical: 10,
-    marginHorizontal: 12,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#D1FAE5'
-  },
-  myProductText: {
-    color: '#065F46',
-    fontWeight: '600',
-    fontSize: 14,
-    marginLeft: 8
-  },
-  unlistButton: {
-    backgroundColor: '#FEF2F2',
-    borderRadius: 12,
-    paddingVertical: 10,
-    marginHorizontal: 12,
-    marginTop: 8,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FEE2E2'
-  },
-  unlistButtonText: {
-    color: '#EF4444',
-    fontWeight: '600',
-    fontSize: 14,
-    marginLeft: 8
-  }
-});

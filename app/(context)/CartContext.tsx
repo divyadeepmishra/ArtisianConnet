@@ -98,3 +98,6 @@ export const useCart = () => {
   }
   return context;
 };
+
+// Add default export to fix the warning
+export default CartProvider;
