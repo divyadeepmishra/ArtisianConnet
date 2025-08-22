@@ -1,7 +1,16 @@
 import { useSignUp } from '@clerk/clerk-expo';
+import { Ionicons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 import * as React from 'react';
-import { SafeAreaView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, SafeAreaView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Animated, {
+    FadeInUp,
+    SlideInDown,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withSpring
+} from 'react-native-reanimated';
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -13,9 +22,32 @@ export default function SignUpScreen() {
   const [password, setPassword] = React.useState('');
   const [pendingVerification, setPendingVerification] = React.useState(false);
   const [code, setCode] = React.useState('');
+  const [showPassword, setShowPassword] = React.useState(false);
+
+  // Animation values
+  const logoScale = useSharedValue(1);
+  const buttonScale = useSharedValue(1);
+
+  React.useEffect(() => {
+    logoScale.value = withRepeat(
+      withSequence(
+        withSpring(1.05, { duration: 2000 }),
+        withSpring(1, { duration: 2000 })
+      ),
+      -1,
+      true
+    );
+  }, []);
 
   const onSignUpPress = async () => {
     if (!isLoaded) return;
+    
+    // Button animation
+    buttonScale.value = withSequence(
+      withSpring(0.95, { duration: 100 }),
+      withSpring(1, { duration: 100 })
+    );
+
     try {
       await signUp.create({
         firstName,
@@ -32,6 +64,13 @@ export default function SignUpScreen() {
 
   const onVerifyPress = async () => {
     if (!isLoaded) return;
+    
+    // Button animation
+    buttonScale.value = withSequence(
+      withSpring(0.95, { duration: 100 }),
+      withSpring(1, { duration: 100 })
+    );
+
     try {
       const completeSignUp = await signUp.attemptEmailAddressVerification({ code });
       if (completeSignUp.status === 'complete') {
@@ -46,83 +85,175 @@ export default function SignUpScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-1 justify-center p-6">
-        {!pendingVerification && (
-          <>
-            <Text className="text-4xl font-extrabold text-gray-900 mb-2">Create Account</Text>
-            <Text className="text-lg text-gray-500 mb-8">Let's get you started.</Text>
+    <SafeAreaView className="flex-1 bg-gradient-to-br from-purple-50 via-white to-blue-50">
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        className="flex-1"
+      >
+        <View className="flex-1 justify-center p-8">
+          {!pendingVerification && (
+            <>
+              {/* Logo and Welcome */}
+              <Animated.View 
+                entering={SlideInDown.delay(200)}
+                className="items-center mb-12"
+              >
+                <Animated.View 
+                  className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-600 rounded-3xl items-center justify-center shadow-2xl mb-6"
+                  style={{ transform: [{ scale: logoScale }] }}
+                >
+                  <Ionicons name="person-add" size={40} color="white" />
+                </Animated.View>
+                <Text className="text-3xl font-bold text-gray-900 mb-2 text-center">
+                  Join Us! 🎉
+                </Text>
+                <Text className="text-lg text-gray-600 text-center">
+                  Create your account to get started
+                </Text>
+              </Animated.View>
 
-            <View className="flex-row gap-4">
-              <TextInput
-                value={firstName}
-                placeholder="First Name"
-                placeholderTextColor={'#A1A1AA'}
-                className="bg-gray-100 text-base text-gray-800 p-4 mb-4 rounded-xl flex-1"
-                onChangeText={setFirstName}
-              />
-              <TextInput
-                value={lastName}
-                placeholder="Last Name"
-                placeholderTextColor={'#A1A1AA'}
-                className="bg-gray-100 text-base text-gray-800 p-4 mb-4 rounded-xl flex-1"
-                onChangeText={setLastName}
-              />
-            </View>
-
-            <TextInput
-              autoCapitalize="none"
-              value={emailAddress}
-              placeholder="Email Address"
-              placeholderTextColor={'#A1A1AA'}
-              className="bg-gray-100 text-base text-gray-800 p-4 mb-4 rounded-xl w-full"
-              onChangeText={setEmailAddress}
-            />
-            <TextInput
-              value={password}
-              placeholder="Password"
-              placeholderTextColor={'#A1A1AA'}
-              secureTextEntry={true}
-              className="bg-gray-100 text-base text-gray-800 p-4 mb-4 rounded-xl w-full"
-              onChangeText={setPassword}
-            />
-            <TouchableOpacity
-              onPress={onSignUpPress}
-              className="bg-gray-900 p-4 rounded-xl w-full items-center"
-            >
-              <Text className="text-white font-bold text-base">Create Account</Text>
-            </TouchableOpacity>
-
-            <Link href="/login" asChild>
-              <TouchableOpacity className="mt-8">
-                <View className="flex-row items-center justify-center">
-                  <Text className="text-gray-600">Already have an account? </Text>
-                  <Text className="text-gray-900 font-bold">Sign In</Text>
+              {/* Form */}
+              <Animated.View entering={FadeInUp.delay(300)} className="space-y-6">
+                {/* Name Inputs */}
+                <View className="flex-row space-x-4">
+                  <View className="flex-1 space-y-2">
+                    <Text className="text-sm font-semibold text-gray-700 ml-1">First Name</Text>
+                    <View className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+                      <TextInput
+                        value={firstName}
+                        placeholder="John"
+                        placeholderTextColor="#9CA3AF"
+                        className="px-4 py-4 text-base text-gray-900"
+                        onChangeText={setFirstName}
+                      />
+                    </View>
+                  </View>
+                  <View className="flex-1 space-y-2">
+                    <Text className="text-sm font-semibold text-gray-700 ml-1">Last Name</Text>
+                    <View className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+                      <TextInput
+                        value={lastName}
+                        placeholder="Doe"
+                        placeholderTextColor="#9CA3AF"
+                        className="px-4 py-4 text-base text-gray-900"
+                        onChangeText={setLastName}
+                      />
+                    </View>
+                  </View>
                 </View>
-              </TouchableOpacity>
-            </Link>
-          </>
-        )}
-        {pendingVerification && (
-          <>
-            <Text className="text-4xl font-extrabold text-gray-900 mb-2">Verify Your Email</Text>
-            <Text className="text-lg text-gray-500 mb-8">Check your inbox for a verification code.</Text>
-            <TextInput
-              value={code}
-              placeholder="Verification Code..."
-              placeholderTextColor={'#A1A1AA'}
-              className="bg-gray-100 text-base text-gray-800 p-4 mb-4 rounded-xl w-full"
-              onChangeText={setCode}
-            />
-            <TouchableOpacity
-              onPress={onVerifyPress}
-              className="bg-gray-900 p-4 rounded-xl w-full items-center"
-            >
-              <Text className="text-white font-bold text-base">Verify Email</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
+
+                {/* Email Input */}
+                <View className="space-y-2">
+                  <Text className="text-sm font-semibold text-gray-700 ml-1">Email Address</Text>
+                  <View className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+                    <TextInput
+                      autoCapitalize="none"
+                      value={emailAddress}
+                      placeholder="Enter your email"
+                      placeholderTextColor="#9CA3AF"
+                      className="px-4 py-4 text-base text-gray-900"
+                      onChangeText={setEmailAddress}
+                    />
+                  </View>
+                </View>
+
+                {/* Password Input */}
+                <View className="space-y-2">
+                  <Text className="text-sm font-semibold text-gray-700 ml-1">Password</Text>
+                  <View className="bg-white rounded-2xl border border-gray-200 shadow-sm flex-row items-center">
+                    <TextInput
+                      value={password}
+                      placeholder="Create a password"
+                      placeholderTextColor="#9CA3AF"
+                      secureTextEntry={!showPassword}
+                      className="flex-1 px-4 py-4 text-base text-gray-900"
+                      onChangeText={setPassword}
+                    />
+                    <TouchableOpacity 
+                      onPress={() => setShowPassword(!showPassword)}
+                      className="px-4"
+                    >
+                      <Ionicons 
+                        name={showPassword ? 'eye-off' : 'eye'} 
+                        size={20} 
+                        color="#9CA3AF" 
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Sign Up Button */}
+                <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                  <TouchableOpacity
+                    onPress={onSignUpPress}
+                    className="bg-gradient-to-r from-purple-500 to-blue-600 p-4 rounded-2xl shadow-lg"
+                  >
+                    <Text className="text-white font-bold text-lg text-center">Create Account</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              </Animated.View>
+
+              {/* Sign In Link */}
+              <Animated.View entering={FadeInUp.delay(400)} className="mt-8">
+                <Link href="/login" asChild>
+                  <TouchableOpacity className="items-center">
+                    <Text className="text-gray-600 text-center">
+                      Already have an account?{' '}
+                      <Text className="text-purple-600 font-bold">Sign In</Text>
+                    </Text>
+                  </TouchableOpacity>
+                </Link>
+              </Animated.View>
+            </>
+          )}
+
+          {pendingVerification && (
+            <>
+              {/* Verification Screen */}
+              <Animated.View 
+                entering={SlideInDown.delay(200)}
+                className="items-center mb-12"
+              >
+                <View className="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-600 rounded-3xl items-center justify-center shadow-2xl mb-6">
+                  <Ionicons name="checkmark-circle" size={40} color="white" />
+                </View>
+                <Text className="text-3xl font-bold text-gray-900 mb-2 text-center">
+                  Check Your Email! 📧
+                </Text>
+                <Text className="text-lg text-gray-600 text-center">
+                  We've sent a verification code to your email
+                </Text>
+              </Animated.View>
+
+              <Animated.View entering={FadeInUp.delay(300)} className="space-y-6">
+                <View className="space-y-2">
+                  <Text className="text-sm font-semibold text-gray-700 ml-1">Verification Code</Text>
+                  <View className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+                    <TextInput
+                      value={code}
+                      placeholder="Enter 6-digit code"
+                      placeholderTextColor="#9CA3AF"
+                      className="px-4 py-4 text-base text-gray-900 text-center"
+                      onChangeText={setCode}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                    />
+                  </View>
+                </View>
+
+                <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                  <TouchableOpacity
+                    onPress={onVerifyPress}
+                    className="bg-gradient-to-r from-green-500 to-blue-600 p-4 rounded-2xl shadow-lg"
+                  >
+                    <Text className="text-white font-bold text-lg text-center">Verify Email</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              </Animated.View>
+            </>
+          )}
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
