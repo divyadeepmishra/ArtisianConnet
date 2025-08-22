@@ -10,7 +10,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#3B82F6',
+        tabBarActiveTintColor: '#FF6B35',
         tabBarInactiveTintColor: '#9CA3AF',
         tabBarStyle: {
           backgroundColor: 'white',
@@ -32,13 +32,13 @@ export default function TabsLayout() {
         },
         tabBarBackground: () => (
           <Animated.View 
-            className="absolute inset-0 bg-white/95 backdrop-blur-xl border-t border-gray-100"
+            className="absolute inset-0 bg-white/95 backdrop-blur-xl border-t border-orange-100"
             style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: -2 },
-              shadowOpacity: 0.05,
-              shadowRadius: 10,
-              elevation: 10,
+              shadowColor: '#FF6B35',
+              shadowOffset: { width: 0, height: -4 },
+              shadowOpacity: 0.1,
+              shadowRadius: 20,
+              elevation: 15,
             }}
           />
         ),
@@ -54,7 +54,7 @@ export default function TabsLayout() {
               size={size} 
               color={color}
               style={{
-                transform: [{ scale: focused ? 1.1 : 1 }],
+                transform: [{ scale: focused ? 1.2 : 1 }],
               }}
             />
           ),
@@ -70,7 +70,7 @@ export default function TabsLayout() {
               size={size} 
               color={color}
               style={{
-                transform: [{ scale: focused ? 1.1 : 1 }],
+                transform: [{ scale: focused ? 1.2 : 1 }],
               }}
             />
           ),
@@ -86,7 +86,7 @@ export default function TabsLayout() {
               size={size} 
               color={color}
               style={{
-                transform: [{ scale: focused ? 1.1 : 1 }],
+                transform: [{ scale: focused ? 1.2 : 1 }],
               }}
             />
           ),
@@ -102,7 +102,7 @@ export default function TabsLayout() {
               size={size} 
               color={color}
               style={{
-                transform: [{ scale: focused ? 1.1 : 1 }],
+                transform: [{ scale: focused ? 1.2 : 1 }],
               }}
             />
           ),

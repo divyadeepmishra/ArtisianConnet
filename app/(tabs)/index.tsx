@@ -143,8 +143,8 @@ export default function HomeScreen() {
       entering={FadeInUp.delay(300)}
       className="flex-1 items-center justify-center py-20"
     >
-      <View className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full items-center justify-center mb-6">
-        <Ionicons name="bag-outline" size={48} color="#9CA3AF" />
+      <View className="w-24 h-24 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full items-center justify-center mb-6">
+        <Ionicons name="bag-outline" size={48} color="#FF6B35" />
       </View>
       <Text className="text-xl font-bold text-gray-700 mb-2">No products found</Text>
       <Text className="text-gray-500 text-center">Try adjusting your search or filters</Text>
@@ -152,23 +152,23 @@ export default function HomeScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-gradient-to-br from-gray-50 to-white" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-gradient-to-br from-orange-50 via-white to-orange-50" edges={['top']}>
       {/* Header */}
       <Animated.View 
         entering={SlideInDown.delay(100)}
-        className="bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 py-4"
+        className="bg-white/95 backdrop-blur-xl border-b border-orange-100 px-4 py-4"
       >
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center space-x-3">
-            <View className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl items-center justify-center shadow-lg">
+            <View className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-3xl items-center justify-center shadow-lg">
               <Text className="text-white font-bold text-sm">AC</Text>
             </View>
             <Text className="font-bold text-xl text-gray-900">ArtsCrafts</Text>
           </View>
-          <TouchableOpacity className="flex-row items-center space-x-2 bg-gradient-to-r from-gray-100 to-gray-200 rounded-2xl px-4 py-2 shadow-sm">
-            <Ionicons name="bag-outline" size={20} color="#374151" />
-            <Text className="font-semibold text-gray-700">Cart</Text>
-            <View className="bg-gradient-to-r from-red-500 to-red-600 rounded-full w-6 h-6 items-center justify-center">
+          <TouchableOpacity className="flex-row items-center space-x-2 bg-gradient-to-r from-orange-100 to-orange-200 rounded-2xl px-4 py-2 shadow-sm">
+            <Ionicons name="bag-outline" size={20} color="#FF6B35" />
+            <Text className="font-semibold text-orange-700">Cart</Text>
+            <View className="bg-gradient-to-r from-orange-500 to-red-500 rounded-full w-6 h-6 items-center justify-center">
               <Text className="text-white text-xs font-bold">3</Text>
             </View>
           </TouchableOpacity>
@@ -210,8 +210,8 @@ export default function HomeScreen() {
                       className={`
                         flex-row items-center space-x-2 px-5 py-3 rounded-2xl shadow-sm
                         ${selectedFilter === tab.id 
-                          ? 'bg-gradient-to-r from-gray-900 to-gray-800 shadow-lg' 
-                          : 'bg-white border border-gray-200'
+                          ? 'bg-gradient-to-r from-orange-500 to-red-500 shadow-lg' 
+                          : 'bg-white border border-orange-200'
                         }
                       `}
                     >
@@ -233,9 +233,9 @@ export default function HomeScreen() {
           <Animated.View entering={FadeInUp.delay(500)} className="space-y-4">
             <View className="flex-row items-center justify-between">
               <Text className="text-2xl font-bold text-gray-900">Holiday Sales</Text>
-              <View className="flex-row items-center space-x-2 bg-gradient-to-r from-red-100 to-red-200 px-4 py-2 rounded-2xl">
-                <Ionicons name="flame" size={16} color="#DC2626" />
-                <Text className="text-red-700 font-semibold text-sm">Hot Deals</Text>
+              <View className="flex-row items-center space-x-2 bg-gradient-to-r from-orange-100 to-red-100 px-4 py-2 rounded-2xl">
+                <Ionicons name="flame" size={16} color="#FF6B35" />
+                <Text className="text-orange-700 font-semibold text-sm">Hot Deals</Text>
               </View>
               <Animated.View 
                 className="flex-row items-center space-x-1"
@@ -248,7 +248,7 @@ export default function HomeScreen() {
 
             {isLoading ? (
               <View className="py-12">
-                <ActivityIndicator size="large" color="#3B82F6" />
+                <ActivityIndicator size="large" color="#FF6B35" />
               </View>
             ) : (
               <FlatList
