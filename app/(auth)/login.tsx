@@ -113,17 +113,17 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
         className="flex-1"
       >
-        <View className="flex-1 justify-center p-8">
+        <View className="flex-1 justify-center p-7">
           {/* Logo and Welcome */}
           <Animated.View 
             entering={SlideInDown.delay(200)}
-            className="items-center mb-12"
+            className="items-center mb-10"
           >
             <Animated.View 
-              className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl items-center justify-center shadow-2xl mb-6"
+              className="w-20 h-25 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl items-center justify-center shadow-2xl mb-6"
               style={{ transform: [{ scale: logoScale }] }}
             >
-              <Ionicons name="sparkles" size={40} color="white" />
+            <Ionicons name="sparkles" size={32} color="white" />
             </Animated.View>
             <Text className="text-3xl font-bold text-gray-900 mb-2 text-center">
               Welcome Back! 👋
@@ -179,7 +179,7 @@ export default function LoginScreen() {
             <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
               <TouchableOpacity
                 onPress={onSignInPress}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-2xl shadow-lg"
+                className="bg-orange-400 p-4 rounded-2xl shadow-lg mt-4"
               >
                 <Text className="text-white font-bold text-lg text-center">Sign In</Text>
               </TouchableOpacity>
@@ -187,14 +187,14 @@ export default function LoginScreen() {
           </Animated.View>
 
           {/* Divider */}
-          <Animated.View entering={FadeInUp.delay(400)} className="flex-row items-center my-8">
+          <Animated.View entering={FadeInUp.delay(400)} className="flex-row items-center my-5">
             <View className="flex-1 h-px bg-gray-200" />
             <Text className="mx-4 text-gray-500 font-medium">or continue with</Text>
             <View className="flex-1 h-px bg-gray-200" />
           </Animated.View>
 
           {/* Social Buttons */}
-          <Animated.View entering={FadeInUp.delay(500)} className="space-y-4">
+          <Animated.View entering={FadeInUp.delay(500)} className="space-y-4 ">
             <TouchableOpacity
               onPress={() => onSocialSignInPress('oauth_google')}
               className="bg-white border border-gray-200 p-4 rounded-2xl flex-row justify-center items-center shadow-sm"
@@ -205,7 +205,7 @@ export default function LoginScreen() {
             
             <TouchableOpacity
               onPress={() => onSocialSignInPress('oauth_apple')}
-              className="bg-white border border-gray-200 p-4 rounded-2xl flex-row justify-center items-center shadow-sm"
+              className="bg-white border border-gray-200 p-4 rounded-2xl flex-row justify-center items-center shadow-sm mt-2"
             >
               <Image source={require('../../assets/images/apple-logo.png')} className="w-6 h-6 mr-3" />
               <Text className="text-gray-800 font-semibold text-base">Continue with Apple</Text>

@@ -90,7 +90,7 @@ export default function SignUpScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
         className="flex-1"
       >
-        <View className="flex-1 justify-center p-8">
+        <View className="flex-1 justify-center p-7">
           {!pendingVerification && (
             <>
               {/* Logo and Welcome */}
@@ -99,7 +99,7 @@ export default function SignUpScreen() {
                 className="items-center mb-12"
               >
                 <Animated.View 
-                  className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-600 rounded-3xl items-center justify-center shadow-2xl mb-6"
+                  className="w-20 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-3xl items-center justify-center shadow-2xl mb-6"
                   style={{ transform: [{ scale: logoScale }] }}
                 >
                   <Ionicons name="person-add" size={40} color="white" />
@@ -186,7 +186,7 @@ export default function SignUpScreen() {
                 <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
                   <TouchableOpacity
                     onPress={onSignUpPress}
-                    className="bg-gradient-to-r from-purple-500 to-blue-600 p-4 rounded-2xl shadow-lg"
+                    className="bg-orange-400 p-4 rounded-2xl shadow-lg mt-4"
                   >
                     <Text className="text-white font-bold text-lg text-center">Create Account</Text>
                   </TouchableOpacity>
@@ -199,7 +199,7 @@ export default function SignUpScreen() {
                   <TouchableOpacity className="items-center">
                     <Text className="text-gray-600 text-center">
                       Already have an account?{' '}
-                      <Text className="text-purple-600 font-bold">Sign In</Text>
+                      <Text className="text-blue-600 font-bold">Sign In</Text>
                     </Text>
                   </TouchableOpacity>
                 </Link>
